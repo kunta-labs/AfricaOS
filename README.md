@@ -3,3 +3,9 @@ A simple, customizable, proposal-based, replicated state machine (RSM), inspired
 
 ## Get the updated code, and documentation on XS code
 https://cp.xscode.com/Kunta-Labs/AfricaOS
+
+## Discord
+https://discord.gg/Bx7zMZ
+
+## Telegram
+t.me/africaos
