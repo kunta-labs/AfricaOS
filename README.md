@@ -8,4 +8,4 @@ https://cp.xscode.com/Kunta-Labs/AfricaOS
 https://discord.gg/Bx7zMZ
 
 ## Telegram
-t.me/africaos
+http://t.me/africaos
