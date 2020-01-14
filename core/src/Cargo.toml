@@ -9,6 +9,5 @@ edition = "2018"
 [[bin]]
 name = "src"
 path = "main.rs"
-
 #may not need, only cargo test throws this error for node import
 node = { path = "../node"}
