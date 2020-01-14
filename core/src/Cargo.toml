@@ -1,0 +1,18 @@
+[package]
+name = "src"
+version = "0.1.0"
+authors = ["jovonnipharr"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+
+[[bin]]
+name = "src"
+path = "main.rs"
+
+
+#may not need, only cargo test throws this error for node import
+node = { path = "../node"}
