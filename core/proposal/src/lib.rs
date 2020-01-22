@@ -1056,8 +1056,8 @@ impl CalculateProposalCreatorID for Proposal {
         println!("calculate_next_proposal_creator_id: peer_length: {} latest_block_id: {}",
                  peer_length,
                  latest_block_id);
+        //todo: add one to include myself -- ASSUMING we are connected to everybody
         return ( (latest_block_id + 1) % ( (peer_length + 1) as i64) ) + 1;
-
     }
 }
 

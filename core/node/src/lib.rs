@@ -284,7 +284,9 @@ impl StateTransition for Node {
             Some(latest_proposal) => {
                 println!("[transition] - latest_proposal_option is some");
                 match latest_proposal.proposal_status {
-                    ProposalStatus::Committed => {
+                    ProposalStatus::Committed |
+                    ProposalStatus::RejectedByNetwork => {
+                        // get latest block id
                         let latest_block_id_option: Option<i64> = DB::get_latest_block_id();
                         match latest_block_id_option {
                             Some(block_id) => {
@@ -297,6 +299,7 @@ impl StateTransition for Node {
                                 }
                             },
                             None => {
+                                //SHOULD NEVER HAPPEN, AT WORST IS -1
                                 println!("[transition] ERROR, NO LATEST BLOCK ID");
                             }
                         }
@@ -310,6 +313,7 @@ impl StateTransition for Node {
                 println!("[transition] ERROR - latest_proposal_option is NONE")
             }
         }
+
         println!("[Done with state transition]")
     }
 
@@ -437,7 +441,17 @@ impl StateTransition for Node {
                 }
             },
             ProposalStatus::Rejected => {
-
+                for peer in self.peers.clone().peer_set {
+                    if Server::broadcast_proposal_response(proposal.clone(),
+                                                           peer.clone().location,
+                                                           node_ip.clone(),
+                                                           ProposalStatus::Rejected).is_ok() {
+                        println!("[determine_transition_step], broadcast_proposal_rejected SUCCESS...");
+                        DB::update_proposal(proposal.clone(), "rejected_broadcasted");
+                    } else {
+                        println!("[determine_transition_step], broadcast_proposal_rejected FAILED...");
+                    }
+                }
             },
             ProposalStatus::RejectedBroadcasted => {
 
@@ -462,6 +476,7 @@ impl StateTransition for Node {
             },
             ProposalStatus::NotValidIncorrectNextBlockIndex => {
                 match Proposal::validate_proposal(proposal.clone()) {
+                    //NOTE: ONLY DO SOMETHING IF YOU CAN SAFELY PARSE THE PROPOSAL, OTHERWISE ERROR
                     Ok(verdict) => {
                         match verdict {
                             ProposalValidationResult::Valid => {
@@ -482,6 +497,23 @@ impl StateTransition for Node {
                         println!("determine_transition_step(), ERROR, could not decide on proposal");
                     }
                 }
+
+                for peer in self.peers.clone().peer_set {
+                    //TODO: decide who we should broadcast to
+                    if Server::broadcast_proposal_response(proposal.clone(),
+                                                           peer.clone().location,
+                                                           node_ip.clone(),
+                                                           ProposalStatus::Rejected).is_ok() {
+
+                        println!("[determine_transition_step], broadcast_proposal_rejected SUCCESS...");
+                        DB::update_proposal(proposal.clone(), "rejected_broadcasted");
+
+                    } else {
+                        println!("[determine_transition_step], broadcast_proposal_rejected FAILED...");
+                        //DB::update_proposal(proposal.proposal_id, "accepted_broadcasted");
+                    }
+                }
+
             },
             ProposalStatus::NotValidIncorrectProposalHash => {
 
