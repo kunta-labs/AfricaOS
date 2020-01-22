@@ -33,12 +33,12 @@ use proposal::{Proposal,
                CompareWithoutStatus,
                ValidateProposalBlock,
                ProposalResolutionAccepted};
+
 use url::Url;
 use reqwest::header::{USER_AGENT, CONTENT_TYPE, ORIGIN};
 use encode::{Encoder, Base64Encode, Base64Decode};
 
 use transaction::{Transaction, CreateNewOuputTransaction};
-
 
 pub trait PayloadParser {
     /*
@@ -70,16 +70,14 @@ impl PayloadParser for Server {
     }
 
     fn get_key_from_header(section: &str, header_sections: Vec<&str>) -> Result<String, String> {
-        if header_sections.len() == 2 {
+        if header_sections.len() == 2 { //if there is just a key, and a value in the header
             let data_second_element: &str = header_sections[1];
             println!("Data data_second_element: {}", data_second_element);
-
             let string_to_trunc: String = String::from(data_second_element);
             let mut header_data: &str = string_to_trunc.trim();
             let final_header_data: String = String::from(header_data);
             Ok(final_header_data)
-
-        } else if header_sections.len() == 3 {
+        } else if header_sections.len() == 3 { // if the header has a colon in the value, such as IPAddress:Port
             let data_second_element: &str = header_sections[1];
             let data_third_element: &str = header_sections[2];
             let string_to_trunc: String = format!("{}:{}", data_second_element, data_third_element);
@@ -87,7 +85,6 @@ impl PayloadParser for Server {
             let mut header_data: &str = string_to_trunc.trim();
             let final_header_data: String = String::from(header_data);
             Ok(final_header_data)
-
         } else {
             println!("Error Splitting relevant header, header_sections.LEN() IS NOT 2 OR 3: {}", section);
             Err(String::from("Error Splitting relevant header, header_sections.LEN() IS NOT 2 OR 3"))
@@ -213,6 +210,7 @@ impl Transmitter for Server {
             let client = reqwest::Client::new();
             let proposal_to_json: String = Proposal::to_json(proposal.clone()).to_string();
             let b64_stringed_proposal: Result<String,String> = Encoder::encode_base64(proposal_to_json);
+            //TODO: alter a meaningful header, not user agent...
             if b64_stringed_proposal.is_ok() {
                 let resp = client.get(peer_location_url)
                                  .header(ORIGIN, ip.as_str())
@@ -288,6 +286,7 @@ impl Transmitter for Server {
             let b64_stringed_proposal: Result<String,String> = Encoder::encode_base64(proposal_to_json);
             if b64_stringed_proposal.is_ok() {
                 let resp = client.get(peer_location_url)
+                                 //.header(ORIGIN, "MYIPADDRESS")
                                  .header(ORIGIN, ip.as_str())
                                  .header(USER_AGENT, b64_stringed_proposal.unwrap())
                                  .send();
@@ -302,6 +301,7 @@ impl Transmitter for Server {
                     }
                  }
             } else {
+                //Err(String::from("Error: broadcast_proposal_createm, Encoder::encode could not encode for some reason"))
                 Ok(())
             }
         }
@@ -349,6 +349,7 @@ impl Transmitter for Server {
             if b64_stringed_proposal.is_ok() {
                 println!( "broadcast_block_query_response(), b64_stringed_proposal{}", b64_stringed_proposal.clone().unwrap() );
                 let resp = client.get(peer_location_url)
+                                 //.header(ORIGIN, "MYIPADDRESS")
                                  .header(ORIGIN, "127.0.0.1")
                                  .header(USER_AGENT, b64_stringed_proposal.unwrap())
                                  .send();
@@ -391,6 +392,9 @@ impl Receiver for Server {
     @desc this starts the TCP server
     */
     fn start(&self) -> Result<String, String> {
+        //loopback address
+        //let server_prefix = String::from("127.0.0.1:");
+        //all interfaces available on the system
         let server_prefix = String::from("0.0.0.0:");
         let port = self.port;
         let server_complete_address = format!("{}{}", server_prefix, port);
@@ -430,7 +434,6 @@ impl Receiver for Server {
                 Err(String::from("ERROR: read_result failed..."))
             }
         };
-
         if read_result.is_ok() {
             let write_result = match Self::handle_write(stream, read_result.unwrap() ) {
                 Ok(write_result) => {
@@ -466,6 +469,7 @@ impl Receiver for Server {
                 let split_payload_for_data: Vec<&str> = req_str.split("\n").collect();
                 let data: Result<String, String> = Self::get_header_from_payload(split_payload_for_data.clone(), "user-agent");
                 if data.is_ok() {
+                    //TODO: get node IP address to send to receiver to pass to invoke action
                     let request_origin: Result<String, String> = Self::get_header_from_payload(split_payload_for_data, "origin");
                     if request_origin.is_ok() {
                         println!("request_origin success: {}", request_origin.clone().unwrap());
@@ -504,6 +508,7 @@ impl Receiver for Server {
                        \r\nContent-Type: application/json; charset=UTF-8
                        \r\n\r\nRESPONSE FROM NODE
                        \r\n";
+
         match stream.write(response) {
             Ok(_) => {
                 println!("handle_write, Stream Write Success");
@@ -530,7 +535,6 @@ pub trait API {
     fn invoke_action(command: &str, data: &str, request_origin: String) -> Result<String, String>;
 }
 
-
 /*
 @name API for Server
 @desc invoked actions by implementing this trait
@@ -543,8 +547,8 @@ impl API for Server {
     fn invoke_action(command: &str, data: &str, request_origin: String) -> Result<String, String> {
         match command {
             /*
-            @endpoint /transaction/submit/output/
-            @desc for an external submission of a transaction
+                @endpoint /transaction/submit/output/
+                @desc for an external submission of a transaction
             */
             "/transaction/submit/output" => {
                 println!("Transaction Submit: {}, {}, {}", command, data, request_origin);
@@ -563,10 +567,10 @@ impl API for Server {
             },
 
             /*
-            @endpoint /proposal/create/
-            @desc create a proposal
-            peerid, proposalid
-            "INVOKES" A -> B
+                @endpoint /proposal/create/
+                @desc create a proposal
+                peerid, proposalid
+                "INVOKES" A -> B
             */
             "/proposal/create/" => {
                 println!("Invocation to create new proposal: {}", data);
@@ -582,10 +586,10 @@ impl API for Server {
             },
 
             /*
-            @endpoint /proposal/created/
-            @desc receive a proposal created by someone else
-            peerid, proposalid?
-            A -> B, AS B
+                @endpoint /proposal/created/
+                @desc receive a proposal created by someone else
+                peerid, proposalid?
+                A -> B, AS B
             */
             "/proposal/created/" => {
                 let decoded_proposal_string: Result<String, String> = Encoder::decode_base64(String::from(data));
@@ -596,6 +600,7 @@ impl API for Server {
                     match decoded_proposal.clone() {
                         Ok(proposal) => {
                             println!("invoke_action, proposal_created: successful proposal decoding, proposal_id: {}", decoded_proposal.unwrap().proposal_id);
+                            //proposal verdict
                             match Proposal::validate_proposal(proposal.clone()) {
                                 Ok(verdict) => {
                                     match verdict {
@@ -622,7 +627,6 @@ impl API for Server {
                                     Err(String::from("invoke_action(), ERROR, could not decide on proposal"))
                                 }
                             }
-
                         },
                         Err(string) => {
                             let err_msg: &str = "Error: invoke_action, proposal_created: FAILED proposal decoding";
@@ -637,9 +641,9 @@ impl API for Server {
             },
 
             /*
-            @endpoint /proposal/response/
-            @desc get responses to a proposal request from peers
-            A <- B, B back to A
+                @endpoint /proposal/response/
+                @desc get responses to a proposal request from peers
+                A <- B, B back to A
             */
             "/proposal/response/" => {
                 println!("Proposal response received: {}", data);
@@ -667,18 +671,19 @@ impl API for Server {
                                 None
                             }
                         };
-
                         if found_proposal.is_some() {
                             match found_proposal.clone().unwrap().proposal_status {
                                 ProposalStatus::Created => {
                                     match decoded_proposal.clone().unwrap().proposal_status {
                                         ProposalStatus::Accepted => {
-                                            Proposal::update_proposal(found_proposal.clone().unwrap(),
-                                            "accepted_by_network");
+                                            Proposal::add_peer_status_to_proposal(found_proposal.clone().unwrap(),
+                                                                                  ProposalStatus::Accepted,
+                                                                                  request_origin);
                                         },
                                         ProposalStatus::Rejected => {
-                                            Proposal::update_proposal(found_proposal.clone().unwrap(),
-                                            "rejected_by_network");
+                                            Proposal::add_peer_status_to_proposal(found_proposal.clone().unwrap(),
+                                                                                  ProposalStatus::Rejected,
+                                                                                  request_origin);
                                         },
                                         _ => {
 
@@ -686,12 +691,17 @@ impl API for Server {
                                     }
                                     Ok(String::from("Proposal response: Successfully parsed"))
                                 },
+
                                 ProposalStatus::AcceptedByNetwork => {
                                     match decoded_proposal.clone().unwrap().proposal_status {
                                         ProposalStatus::Accepted => {
 
+                                            //TODO: WE CREATED IT AND WE JUST RECEIVED AN ACCEPTANCE
+
                                         },
                                         ProposalStatus::Rejected => {
+
+                                            //TODO: WE CREATED IT AND WE JUST RECEIVED A REJECTION
 
                                         },
                                         _ => {
@@ -704,8 +714,11 @@ impl API for Server {
                                     match decoded_proposal.clone().unwrap().proposal_status {
                                         ProposalStatus::Accepted => {
 
+                                            //TODO: WE CREATED IT AND WE JUST RECEIVED AN ACCEPTANCE
+
                                         },
                                         ProposalStatus::Rejected => {
+                                            //TODO: WE CREATED IT AND WE JUST RECEIVED A REJECTION
 
                                         },
                                         _ => {
@@ -731,8 +744,8 @@ impl API for Server {
             },
 
             /*
-            @endpoint /proposal/resolution/
-            @desc notify peers that you have commited
+                @endpoint /proposal/resolution/
+                @desc notify peers that you have commited
                   to a resolution.
             */
             "/proposal/resolution/" => {
@@ -797,6 +810,7 @@ impl API for Server {
                 }
             },
 
+
             /*
                 @endpoint /state/get/
                 @desc get the state from the DB
@@ -807,8 +821,8 @@ impl API for Server {
             },
 
             /*
-            @endpoint /block/query/
-            @desc when a node requests a specific block
+                @endpoint /block/query/
+                @desc when a node requests a specific block
             */
             "/block/query/" => {
                 println!("block query received: {} | {} | {}", command, data, request_origin);
@@ -828,6 +842,7 @@ impl API for Server {
                             } else {
                                 println!("/block/query/, proposal.block_id does not match requested block_id");
                             }
+
                         }
                         same_proposal
                     },
@@ -844,8 +859,8 @@ impl API for Server {
             },
 
             /*
-            @endpoint /block/response/
-            @desc after a node requests a block, the block is sent to this endpoint in response
+                @endpoint /block/response/
+                @desc after a node requests a block, the block is sent to this endpoint in response
             */
             "/block/response/" => {
                 println!("Received Block from a peer AFTER QUERYING FOR IT");
@@ -869,7 +884,9 @@ impl API for Server {
                 } else {
                     Err(String::from("Block response, proposal.decode_base64() FAILED"))
                 }
+
             },
+
             _ => Err(String::from("API endpoint not correct"))
         }
     }
@@ -889,11 +906,12 @@ mod tests {
                                            \r\nUser-Agent: example
                                            \r\n\r\nRESPONSE FROM NODE
                                            \r\n");
+
+
         let payload_split: Vec<&str> = payload.split("\n").collect();
         let data: Result<String, String> = Server::get_header_from_payload(payload_split, "user-agent");
         assert_eq!(data, Ok(String::from("example")));
     }
-
 
     #[test]
     fn test_parse_origin_for_header() {
@@ -904,8 +922,10 @@ mod tests {
                                            \r\nOrigin: 127.0.0.1
                                            \r\n\r\nRESPONSE FROM NODE
                                            \r\n");
+
         let payload_split: Vec<&str> = payload.split("\n").collect();
         let data: Result<String, String> = Server::get_header_from_payload(payload_split, "origin");
         assert_eq!(data, Ok(String::from("127.0.0.1")));
     }
+
 }

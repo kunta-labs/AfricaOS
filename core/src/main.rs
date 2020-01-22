@@ -18,22 +18,35 @@ use std::env;
 use std::thread;
 
 fn main() {
-    println!("[Starting AOS Node]");
+    println!("Starting AOS...");
+
+    /*
+    TODO: implement responsive CLI to:
+    - start()
+    - add_peer() //shouldn't add peers over network
+    - create_proposal()
+    - accept_or_reject()
+    */
+
     let node_name: String = String::from("default");
+    let node_id: i32 = 1;
     let port_parameter: i32 = 8000;
     let node_ip: String = String::from("0.0.0.0");
-    let mut node: Node = Node::new(node_name, port_parameter, node_ip);
+    let mut node: Node = Node::new(node_name, node_id, port_parameter, node_ip);
     let args: Vec<String> = env::args().collect();
     let mut arg_iter = (&args).into_iter();
+
+    //TODO: Abstract Parameters
     while let Some(param) = arg_iter.next(){
         println!("arg: {}", param);
         let split_param_by_assignment: Vec<&str> = param.split("=").collect();
-        if split_param_by_assignment.len() == 2 {
+        if split_param_by_assignment.len() == 2 { //equal is a binary operator
             let param_key: &str = split_param_by_assignment[0];
             let param_value: &str = split_param_by_assignment[1];
             println!("split_param_by_assignment: {} : {}", param_key, param_value);
             match param_key {
                 "node-name" => node.set_node_name(param_value.to_string()),
+                "node-id" => node.set_node_id( param_value.parse::<i32>().unwrap() ),
                 "port" => node.set_port(param_value.parse::<i32>().unwrap()),
                 "peers" => node.set_initial_peers(param_value.to_string()),
                 "ip" => node.set_node_ip(param_value.to_string()),
@@ -51,9 +64,13 @@ fn main() {
 
     loop {
         node.transition();
-        thread::sleep_ms(10000);
+        thread::sleep_ms(1000); //delay between every global state transition
     }
+
 }
+
+
+
 
 #[cfg(test)]
 mod tests {
@@ -62,6 +79,7 @@ mod tests {
     use timestamp::{Timestamp, NewTimestamp};
     use network::{Server, PayloadParser, API};
 
+
     #[test]
     fn test_validate_proposal_isok() {
         let successful_msg: &str = "Successful Proposal Validation";
@@ -69,6 +87,7 @@ mod tests {
         let test_timestamp: Option<Timestamp> = Timestamp::new();
         let test_block: Result<Block, String> = Block::new();
         println!("test_timestamp: {}", test_timestamp.clone().unwrap().timestamp);
+
         let test_proposal: Proposal = Proposal {
             proposal_id: 0,
             proposal_status: ProposalStatus::Created,
@@ -89,6 +108,7 @@ mod tests {
         let test_timestamp: Option<Timestamp> = Timestamp::new();
         let test_block: Result<Block, String> = Block::new();
         println!("test_timestamp: {}", test_timestamp.clone().unwrap().timestamp);
+
         let test_proposal: Proposal = Proposal {
             proposal_id: 0,
             proposal_status: ProposalStatus::Created,
@@ -97,6 +117,7 @@ mod tests {
             proposal_sender: String::from("test proposal sender"),
             proposal_block: test_block.unwrap()
         };
+
         let proposal_validated: Result<ProposalValidationResult, std::io::Error> = Proposal::validate_proposal(test_proposal);
         assert_eq!(ProposalValidationResult::Valid, proposal_validated.unwrap());
     }

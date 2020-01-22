@@ -38,7 +38,7 @@ impl NodeNameSetter for DB {
 /*
 @desc PROPOSALS_LOC stores all proposals the network submits
 */
-const PROPOSALS_LOC: &str = "storage/proposal/";
+const PROPOSALS_LOC: &str = "storage/proposal/";//&(format!("{}", "storage/proposal/").as_str());
 const PROPOSALS_DB_LOC: &str = "storage/proposals.db";
 
 /*
@@ -75,10 +75,6 @@ pub trait DBWrite {
 }
 
 impl DBWrite for DB {
-    /*
-    TODO: should take a proposal, or a transaction?
-    fn write<T: Proposal>(t: &T) -> Result<(),std::io::Error> {
-    */
     fn write(content: String, location: String) -> Result<String,std::io::Error> {
         println!("DB write, Writing to DB");
         let file_location: String = format!("{}", location);
@@ -348,9 +344,6 @@ impl DBWriteBlock for DB {
         Ok(block_string)
     }
 }
-
-
-////////////////END BLOCK
 
 /*
 @name FileDirectoryReader

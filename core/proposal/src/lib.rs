@@ -28,7 +28,7 @@ use block::{Block,
             BlockToJson,
             BlockFromString,
             JsonToBlock,
-            ReadBlockFromDB,
+            ReadBlock,
             CommitBlock};
 
 use timestamp::{Timestamp, NewTimestamp, StringToTimestamp};
@@ -102,7 +102,7 @@ pub trait StringToStatus {
 }
 
 /*
-@name
+@name status_from_string
 @desc
 */
 impl StringToStatus for Proposal {
@@ -203,6 +203,7 @@ impl JsonConverter for Proposal {
                 Err(String::from("Proposal, ERROR: from_json, proposal_id could not be parsed as i32!"))
             }
         }
+
     }
 
     fn from_json_string(json_string: String) -> Result<Proposal, String> {
@@ -242,10 +243,21 @@ impl CreateProposalIndex for Proposal {
     }
 }
 
+
 /*
 @name UpdateProposalInDB
 */
 pub trait UpdateProposalInDB {
+    /*
+        @name add_peer_status_to_proposal
+        @desc add a key to the proposal DB
+    */
+    fn add_peer_status_to_proposal(proposal: Proposal, status: ProposalStatus, peer: String) -> Result<String, String>;
+
+    /*
+        @name update_proposal
+        @desc
+    */
     fn update_proposal(proposal: Proposal, status: &str) -> Result<String,String> ;
 }
 
@@ -254,13 +266,41 @@ pub trait UpdateProposalInDB {
 @desc
 */
 impl UpdateProposalInDB for DB {
+
+    fn add_peer_status_to_proposal(proposal: Proposal,
+                                   status: ProposalStatus,
+                                   peer: String) -> Result<String, String> {
+
+        println!("Inside add_node_status_to_proposal_json");
+        let mut proposal_index_option: Option<JsonValue> = Self::get_proposal_index_as_json();
+        match proposal_index_option {
+            Some(mut proposal_index) => {
+                let all_proposals = &mut proposal_index["proposals"];
+                let stringed_status = Proposal::string_from_status(status);
+                all_proposals[proposal.proposal_id.to_string()][peer] = JsonValue::from(stringed_status);
+                let proposal_write_result: Result<String,String> = match Self::write_proposal_index(proposal_index.dump()) {
+                    Ok(result) => {
+                        Ok(result)
+                    },
+                    Err(err) => {
+                        Err( String::from("add_peer_status_to_proposal ERROR: Writing proposal index failed") )
+                    }
+                };
+                proposal_write_result
+            },
+            None => {
+                Err(String::from("proposal_index_option is NONE"))
+            }
+        }
+    }
+
     fn update_proposal(proposal: Proposal, status: &str) -> Result<String,String> {
         println!("Inside update proposal");
         let mut proposal_index_option: Option<JsonValue> = Self::get_proposal_index_as_json();
         match proposal_index_option {
             Some(mut proposal_index) => {
                 let all_proposals = &proposal_index["proposals"];
-                let new_proposal_status: ProposalStatus = Proposal::status_from_string( status );
+                let new_proposal_status: ProposalStatus = Proposal::status_from_string( status.clone() );
                 let altered_proposal_block: Result<Block, String> = Block::from_json(all_proposals[ proposal.proposal_id.to_string() ]["proposal_block"].clone());
                 match altered_proposal_block {
                     Ok(block) => {
@@ -274,7 +314,10 @@ impl UpdateProposalInDB for DB {
                         };
                         let parsed = json::parse( &format!(r#"{}"#, Proposal::to_json(altered_proposal.clone()) ) );
                         if parsed.is_ok() {
-                            proposal_index["proposals"][proposal.proposal_id.to_string()] = parsed.unwrap();
+                            proposal_index
+                            ["proposals"]
+                            [proposal.proposal_id.to_string()]
+                            ["proposal_status"] = JsonValue::from(status);
                             let proposal_write_result: Result<String,String> = match Self::write_proposal_index(proposal_index.dump()) {
                                 Ok(result) => {
                                     match Self::write_proposal(altered_proposal.clone(), new_proposal_status.clone()){
@@ -305,8 +348,6 @@ impl UpdateProposalInDB for DB {
                 Err(String::from("update_proposal ERROR, proposal_index_option is NONE"))
             }
         }
-
-
     }
 }
 
@@ -316,7 +357,7 @@ impl UpdateProposalInDB for DB {
 */
 pub trait ReadProposalFromDB {
     fn get_proposal_index_as_json() -> Option<JsonValue>;
-    fn get_latest_proposal() -> Option<i32>;
+    fn get_latest_proposal() -> Option<Proposal>;
     fn get_all_proposals() -> Option<Vec<Proposal>>;
     fn get_last_n_proposals() -> Option<Vec<Proposal>>;
 }
@@ -326,7 +367,6 @@ pub trait ReadProposalFromDB {
 @desc
 */
 impl ReadProposalFromDB for DB {
-
     /*
     @name get_proposal_index_as_json
     @desc return the proposal index as a json object
@@ -350,15 +390,22 @@ impl ReadProposalFromDB for DB {
                 None
             }
         }
-
     }
 
     /*
     @name get_latest_proposal
     @desc get the latest proposal
     */
-    fn get_latest_proposal() -> Option<i32> {
-        Some(10)
+    fn get_latest_proposal() -> Option<Proposal> {
+        let last_n_proposals_option: Option<Vec<Proposal>> = Self::get_last_n_proposals();
+        match last_n_proposals_option {
+            Some(mut last_n_proposals) => {
+                last_n_proposals.pop()
+            },
+            None => {
+                None
+            }
+        }
     }
 
     /*
@@ -426,7 +473,6 @@ impl ReadProposalFromDB for DB {
                     },
                     None => None
                 }
-
             },
             None => None
         }
@@ -452,48 +498,72 @@ impl WriteProposalToDB for DB {
     */
     fn write_proposal(mut proposal: Proposal, new_status: ProposalStatus) -> Result<String,std::io::Error> {
         println!("inside write_proposal new_status: ProposalStatusn Proposal, DB trait");
-        proposal.proposal_status = new_status.clone();
-        let proposal_string: String = Proposal::to_json(proposal.clone());
         let parsed_option: Option<JsonValue> = Self::get_proposal_index_as_json();
         match parsed_option {
             Some(mut parsed) => {
-                let new_proposal_entry = object!{
-                    "proposal_id" => proposal.proposal_id,
-                    "proposal_status" => Proposal::string_from_status(new_status),
-                    "proposal_hash" => proposal.proposal_hash,
-                    "proposal_time" => proposal.proposal_time.timestamp,
-                    "proposal_sender" => proposal.proposal_sender,
-                    "proposal_block" => Block::to_json(proposal.proposal_block)
-                };
-                let pindex_insert_result: Result<String, Error> = match parsed["proposals"]
-                      .insert( &(format!("{}", proposal.proposal_id).to_string() ),
-                               new_proposal_entry) {
-                    Ok(_) => {
-                        println!("New Proposal JSON: {}", parsed.dump());
-                        let db_index_write_result = Self::write_proposal_index(parsed.dump());
-                        if db_index_write_result.is_ok() {
+                proposal.proposal_status = new_status.clone();
+                let proposal_string: String = Proposal::to_json(proposal.clone());
+                if parsed.has_key( &(format!("{}", proposal.proposal_id).to_string()) ) {
+                    let stringed_status = Proposal::string_from_status(new_status);
+                    parsed["proposals"]
+                          [&(format!("{}", proposal.proposal_id).to_string())]
+                          ["proposal_status"] = JsonValue::from(stringed_status);
+                    println!("write_proposal, UPDATE Proposal JSON: {}", parsed.dump());
+                    let db_index_write_result: Result<String, Error> = Self::write_proposal_index(parsed.dump());
+                    match db_index_write_result {
+                        Ok(result) => {
+                            let proposal_string: String = Proposal::to_json(proposal.clone());
                             let db_write_result: Result<String, std::io::Error> = Self::write_proposal_to_sql(proposal.proposal_id, proposal_string.clone());
-                            db_write_result
-                        } else {
-                            let proposal_db_write_error = Error::new(ErrorKind::Other, "Couldn't write Proposal to DB");
-                            Err(proposal_db_write_error)
+                            match db_write_result {
+                                Ok(r) => {
+                                    Ok(r)
+                                },
+                                Err(err) => {
+                                    Err(err)
+                                }
+                            }
+                        },
+                        Err(err) => {
+                            Err(err)
                         }
-
-                    },
-                    Err(r) => {
-                        println!("Failed adding new Proposal to Proposal_index: {}", parsed.dump());
-                        let proposal_index_insert_error = Error::new(ErrorKind::Other, "Could not add proposal to proposal_index");
-                        Err(proposal_index_insert_error)
                     }
-                };
-                pindex_insert_result
+                } else {
+                    let new_proposal_entry = object!{
+                        "proposal_id" => proposal.proposal_id,
+                        "proposal_status" => Proposal::string_from_status(new_status),
+                        "proposal_hash" => proposal.proposal_hash,
+                        "proposal_time" => proposal.proposal_time.timestamp,
+                        "proposal_sender" => proposal.proposal_sender,
+                        "proposal_block" => Block::to_json(proposal.proposal_block)
+                    };
+                    let pindex_insert_result: Result<String, Error> = match parsed["proposals"]
+                          .insert( &(format!("{}", proposal.proposal_id).to_string() ),
+                                   new_proposal_entry) {
+                        Ok(_) => {
+                            println!("New Proposal JSON: {}", parsed.dump());
+                            let db_index_write_result = Self::write_proposal_index(parsed.dump());
+                            if db_index_write_result.is_ok() {
+                                let db_write_result: Result<String, std::io::Error> = Self::write_proposal_to_sql(proposal.proposal_id, proposal_string.clone());
+                                db_write_result
+                            } else {
+                                let proposal_db_write_error = Error::new(ErrorKind::Other, "Couldn't write Proposal to DB");
+                                Err(proposal_db_write_error)
+                            }
+                        },
+                        Err(r) => {
+                            println!("Failed adding new Proposal to Proposal_index: {}", parsed.dump());
+                            let proposal_index_insert_error = Error::new(ErrorKind::Other, "Could not add proposal to proposal_index");
+                            Err(proposal_index_insert_error)
+                        }
+                    };
+                    pindex_insert_result
+                }
             },
             None => {
                 let get_proposal_index_as_json_error = Error::new(ErrorKind::Other, "write_proposal() [Error], Problem getting proposal index as json");
                 Err(get_proposal_index_as_json_error)
             }
         }
-
     }
 }
 
@@ -511,7 +581,7 @@ trait WriteNewProposalToDB {
 */
 impl WriteNewProposalToDB for Proposal {
     fn write_new_proposal(proposal: Proposal) -> Result<String,std::io::Error> {
-        DB::write_proposal(proposal, ProposalStatus::Pending) //write proposal
+        DB::write_proposal(proposal, ProposalStatus::Pending)
     }
 }
 
@@ -540,6 +610,7 @@ impl StoreProposal for Proposal {
 pub trait GetProposals {
     fn get_all_proposals() -> Option<Vec<Proposal>>;
     fn get_last_n_proposals() -> Option<Vec<Proposal>>;
+    fn get_latest_proposal() -> Option<Proposal>;
 }
 
 impl GetProposals for Proposal {
@@ -550,18 +621,32 @@ impl GetProposals for Proposal {
     fn get_last_n_proposals() -> Option<Vec<Proposal>> {
         DB::get_last_n_proposals()
     }
-}
 
+    fn get_latest_proposal() -> Option<Proposal>{
+        DB::get_latest_proposal()
+    }
+
+}
 
 /*
     @name UpdateProposal
     @desc update proposals without exposing the DB struct
 */
 pub trait UpdateProposal {
+    /*
+        @name add_peer_status_to_proposal
+        @desc add a key to the proposal DB
+    */
+    fn add_peer_status_to_proposal(proposal: Proposal, status: ProposalStatus, peer: String) -> Result<String, String>;
+
     fn update_proposal(proposal: Proposal, status: &str) -> Result<String,String> ;
 }
 
 impl UpdateProposal for Proposal {
+    fn add_peer_status_to_proposal(proposal: Proposal, status: ProposalStatus, peer: String) -> Result<String, String> {
+        DB::add_peer_status_to_proposal(proposal, status, peer )
+    }
+
     fn update_proposal(proposal: Proposal, status: &str) -> Result<String,String>  {
         DB::update_proposal(proposal, status)
     }
@@ -702,6 +787,7 @@ impl ProposalIDGenerator for Proposal {
         match highest_proposal_index {
             -1 => None,
             _ => Some(highest_proposal_index),
+
         }
     }
 }
@@ -753,6 +839,7 @@ impl ProposalValidator for Proposal {
                 None
             }
         };
+
         if already_commited.is_some() {
             true
         } else {
@@ -760,9 +847,8 @@ impl ProposalValidator for Proposal {
         }
     }
 
-    /*
-    @name validate_proposal
-    */
+    //NOTE: validate proposal is called from the "created endpoint"
+    // this should only be invoked from one node for a given block
     fn validate_proposal(submitted_proposal: Proposal) -> Result<ProposalValidationResult, std::io::Error> {
         println!("validate_proposal(), Submitted Proposal: {}", submitted_proposal.proposal_id);
         if Self::is_accepted_broadcasted_already(submitted_proposal.clone()) {
@@ -781,7 +867,7 @@ impl ProposalValidator for Proposal {
             let proposal_id_string: String = format!("{}", submitted_proposal.proposal_id);
             let proposal_id_check = &all_proposals[proposal_id_string.clone()];
             if !proposal_id_check.has_key( proposal_id_string.clone().as_str() ) {
-                    let current_block_id: Option<i64> = DB::get_latest_block_id();
+                    let current_block_id: Option<i64> = Block::get_latest_block_id();
                     let current_block_id_result: i64 = match current_block_id {
                         Some(block_id) => {
                             println!("validate_proposal(), current_block_id, block_id: {}", block_id);
@@ -795,13 +881,15 @@ impl ProposalValidator for Proposal {
 
                     } else {
                         return Ok(ProposalValidationResult::NotValidIncorrectNextBlockIndex)
-
                     }
+
                     let string_to_hash: String = String::from( format!("{}{}{}", submitted_proposal.proposal_id,
                                                                                  submitted_proposal.proposal_sender,
-                                                                                 submitted_proposal.proposal_time.timestamp).as_str() );
+                                                                                 submitted_proposal.proposal_time.timestamp).as_str() ) ;
+
                     let expected_hash: String = submitted_proposal.proposal_hash;
                     let submitted_proposal_hash: String = Hasher::calculate_sha256( string_to_hash );
+
                     match submitted_proposal_hash {
                         _ if submitted_proposal_hash == expected_hash => {
                             println!("HASH SUCCESS: proposal hash IS CORRECT: {}{}", expected_hash, submitted_proposal_hash);
@@ -814,6 +902,7 @@ impl ProposalValidator for Proposal {
             } else {
 
             }
+
             let proposal_validation_error = Error::new(ErrorKind::Other, "Couldn't validate proposal");
             Ok(ProposalValidationResult::Valid)
         }
@@ -875,7 +964,9 @@ impl CompareWithoutStatus for Proposal {
                 return false
             }
         }
+
         true
+
     }
 }
 
@@ -924,10 +1015,12 @@ impl ProposalResolutionAccepted for Proposal {
                        Err(())
                 }
             },
+
             ProposalStatus::RejectedByNetwork => {
                 println!("invoke_action(), proposal_resolution - decoded_proposal STATUS IS RejectedByNetwork");
                 Err(())
             },
+
 
             ProposalStatus::Committed => {
                 println!("invoke_action(), proposal_resolution - received_proposal STATUS IS Commited");
@@ -949,9 +1042,34 @@ impl ProposalResolutionAccepted for Proposal {
     }
 }
 
+pub trait CalculateProposalCreatorID {
+    /*
+        @name calculate_next_proposal_creator_id
+        @desc to determine which node is gets to create the next proposal:
+        @example node_is is CONGRUENT to current_block_id % peer_set.len()
+    */
+    fn calculate_next_proposal_creator_id(peer_length: usize, latest_block_id: i64) -> i64;
+}
+
+impl CalculateProposalCreatorID for Proposal {
+    fn calculate_next_proposal_creator_id(peer_length: usize, latest_block_id: i64) -> i64 {
+        println!("calculate_next_proposal_creator_id: peer_length: {} latest_block_id: {}",
+                 peer_length,
+                 latest_block_id);
+        return ( (latest_block_id + 1) % ( (peer_length + 1) as i64) ) + 1;
+
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{Proposal, ProposalStatus, JsonConverter, ProposalValidator, ProposalValidationResult};
+    use super::{Proposal,
+                ProposalStatus,
+                JsonConverter,
+                ProposalValidator,
+                ProposalValidationResult,
+                CalculateProposalCreatorID};
+
     use block::{Block, CreateNewBlock};
     use timestamp::{Timestamp, NewTimestamp};
 
@@ -971,6 +1089,30 @@ mod tests {
         }}");
         let proposal: Result<Proposal, String> = Proposal::from_json_string(starting_string);
         assert_eq!(proposal.unwrap().proposal_status, ProposalStatus::Pending);
+    }
+
+    #[test]
+    fn test_calculate_next_proposal_creator_id_3_nodes_block_0() {
+        let number_of_peers: usize = 2;
+        let next_block_id: i64 = 0;
+        assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers,
+                                                                next_block_id), 1);
+    }
+
+    #[test]
+    fn test_calculate_next_proposal_creator_id_3_nodes_block_1() {
+        let number_of_peers: usize = 2;
+        let next_block_id: i64 = 1;
+        assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers,
+                                                                next_block_id), 2);
+    }
+
+    #[test]
+    fn test_calculate_next_proposal_creator_id_3_nodes_block_2() {
+        let number_of_peers: usize = 2;
+        let next_block_id: i64 = 2;
+        assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers,
+                                                                next_block_id), 3);
     }
 
 }

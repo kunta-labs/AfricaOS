@@ -43,6 +43,11 @@ pub struct Block {
   pub transactions: Vec<Transaction>
 }
 
+
+/*
+@name CreateBlockIndex
+@desc
+*/
 pub trait CreateBlockIndex {
     fn create_block_index() -> ();
 }
@@ -53,11 +58,9 @@ pub trait CreateBlockIndex {
 */
 impl CreateBlockIndex for Block {
     fn create_block_index() -> (){
-
         let new_block_index = object!{
             "blocks" => object!{}
         };
-
         let index_to_write: String = json::stringify(new_block_index);
         match DB::write_block_index(index_to_write) {
             Ok(_) => {
@@ -125,17 +128,14 @@ impl ReadBlockFromDB for DB {
                 let all_blocks = &block_index_parsed["blocks"];
 
                 if all_blocks.is_empty() {
-                    //None
                     Some(-1)
                 } else {
-                    let mut highest_block_id: i64 = all_blocks.len() as i64;
-                    Some(highest_block_id - 1)
+                    let mut amount_of_blocks: i64 = all_blocks.len() as i64;
+                    Some(amount_of_blocks - 1)
                 }
             },
             None => None
         }
-
-
     }
 
     /*
@@ -185,7 +185,6 @@ impl ReadBlockFromDB for DB {
     }
 
 }
-
 
 /*
 @name WriteProposalToDB
@@ -245,7 +244,9 @@ impl CreateNewBlock for Block {
         };
 
         let transactons_from_pool: Vec<Transaction> = DB::get_all_transactions();
+
         println!("CreateNewBlock, transactons_from_pool, tx count: {}", transactons_from_pool.len());
+
         match new_block_time {
             Some(ts) => {
                 Ok(Block {
@@ -310,7 +311,6 @@ impl BlockFromString for Block {
             match parsed_timestamp.clone() {
                 Some(ts) => {
                     println!("BlockFromString, from_string, Parsed timestamp, Some: {}", parsed_timestamp.clone().unwrap().timestamp);
-
                     let tx_vec: Result<Vec<Transaction>, String> = Transaction::tx_vec_from_json( parsed["transactions"].clone() );
                     if tx_vec.clone().is_ok() {
                         println!("BlockFromString, from_string, tx_vec count: {}", tx_vec.clone().unwrap().len());
@@ -385,7 +385,6 @@ trait VerifyBlockAnscestry {
 
 impl VerifyBlockAnscestry for Block {
     fn verify_block_anscestry(current_block: Block, proposed_block: Block) -> bool {
-
         match current_block {
             _ if current_block.block_hash == proposed_block.block_parent_hash => {
                 true
@@ -394,7 +393,6 @@ impl VerifyBlockAnscestry for Block {
                 false
             }
         }
-
     }
 }
 
@@ -430,6 +428,7 @@ impl ValidateAcceptedProposalBlock for Block {
 /*
     @name process block
 */
+
 trait ProcessBlock {
     fn process_genesis_block(submitted_block: Block) -> bool;
     fn process_nongenesis_block(submitted_block: Block) -> bool;
@@ -467,7 +466,7 @@ impl ProcessBlock for Block {
                 },
                 false => {
                     println!("process_nongenesis_block, SUBMITTED_BLOCK ID IS [NOT] EQUAL TO MY BLOCK ID + 1, ERROR");
-                    let current_block_id_option: Option<i64> = DB::get_latest_block_id();  // Get my latest block
+                    let current_block_id_option: Option<i64> = DB::get_latest_block_id();
                     match current_block_id_option {
                         Some(current_block_id) => {
                             let current_block_by_id_option: Option<Block> = DB::get_block_by_block_id(current_block_id);
@@ -482,6 +481,7 @@ impl ProcessBlock for Block {
                             }
 
                         },
+
                         None => {
                             println!("process_nongenesis_block, current_block_id_option is NONE");
                             return false
@@ -575,6 +575,15 @@ impl CommitBlock for Block {
     }
 }
 
+pub trait ReadBlock {
+    fn get_latest_block_id() -> Option<i64>;
+}
+
+impl ReadBlock for Block {
+    fn get_latest_block_id() -> Option<i64> {
+        DB::get_latest_block_id()
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -600,6 +609,7 @@ mod tests {
             \"proposal_hash\": \"test proposal hash\",
             \"block_data\": \"test block data\"
         }";
+
         let actual_block: Result<Block, String> = Block::from_string( String::from(stringed_block) );
         assert_eq!(actual_block.unwrap(), expected_block);
     }
@@ -614,6 +624,7 @@ mod tests {
             "proposal_hash" => "hash",
             "block_data" => "data",
         };
+
         let expected_block: Block = Block {
             block_id: 0,
             block_hash: String::from("hash"),
@@ -622,7 +633,9 @@ mod tests {
             proposal_hash: String::from("hash"),
             block_data: String::from("data"),
         };
+
         let actual_block: Result<Block, String> = Block::from_json(data);
         assert_eq!(expected_block, actual_block.unwrap());
+
     }
 }
