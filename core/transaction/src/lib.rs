@@ -664,7 +664,7 @@ impl Executable for Transaction {
             TransactionType::Input => {
                 println!("TX execute TX Input");
                 State::to_json(current_state_buffer.clone().unwrap())
-
+                //TODO: male tx
             },
             TransactionType::TxTypeError => {
                 println!("TX execute ERROR: TxTypeError");

@@ -450,7 +450,7 @@ impl ReadProposalFromDB for DB {
                     Some(next_proposal_id) => {
                         let mut all_proposals_vector: Vec<Proposal> = Vec::new();
                         let mut highest_proposal_to_fetch: i32 = ( format!("{}", proposal_index["proposals"].clone().len() ).parse::<i32>().unwrap() );//next_proposal_id + 5;
-                        let mut furthest_proposal_to_fetch: i32 = highest_proposal_to_fetch - 5;//next_proposal_id;
+                        let mut furthest_proposal_to_fetch: i32 = highest_proposal_to_fetch - 1;//next_proposal_id;
                         if furthest_proposal_to_fetch < 0 {
                             furthest_proposal_to_fetch = 0;
                         } else {}

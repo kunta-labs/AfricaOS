@@ -217,7 +217,7 @@ impl StateTransition for Node {
             }
         };
 
-        let delay: u32 = 3000;
+        let delay: u32 = 10000;
 
         match proposals {
             Ok(p) => {
@@ -461,15 +461,6 @@ impl StateTransition for Node {
             },
             ProposalStatus::Committed => {
                 println!("[determine_transition_step], committed, only broadcast so others waiting can get it...");
-                for peer in self.peers.clone().peer_set {
-                    if Server::broadcast_proposal_resolution(proposal.clone(),
-                                                          peer.clone().location,
-                                                          node_ip.clone()).is_ok() {
-                        println!("[determine_transition_step], broadcast_proposal_resolution SUCCESS...");
-                    } else {
-                        println!("[determine_transition_step], broadcast_proposal_resolution FAILED...");
-                    }
-                }
             },
             ProposalStatus::NotValid => {
                 //TODO: throw error
