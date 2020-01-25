@@ -33,19 +33,19 @@ make cici
 
 Now they should be pointed to each other from a peer perspective
 
-# begin proposal generation
+# Begin proposal generation
 This will submit a first proposal to alice, which will initiate proposal generation amongst each node (alice, bob, and cici)
 ```
 make p_alice
 ```
 
-# stress with input/female transaction
+# Stress with input/female transaction
 To create/submit a new transaction every m minutes
 ```
 make stress
 ```
 
-**under active devlopment**
+**under active development**
 
 ## Discord
 https://discord.gg/dMvtDeW
