@@ -3,6 +3,7 @@ python:
   - "3.7"
 # command to install dependencies
 install:
-  - cargo
+  - cd core
+  - cargo install
 # command to run tests
 script: cargo check
