@@ -1,0 +1,8 @@
+language: rust
+python:
+  - "3.7"
+# command to install dependencies
+install:
+  - cargo
+# command to run tests
+script: cargo check
