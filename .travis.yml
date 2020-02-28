@@ -1,9 +1,5 @@
 language: rust
-rust:
-  - "2018"
-# command to install dependencies
 install:
   - cd core
   - cargo build
-# command to run tests
 script: cargo check
