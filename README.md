@@ -8,9 +8,11 @@
 [![Top language](https://img.shields.io/github/languages/top/Project-Kunta/AfricaOS.svg)](https://github.com/Project-Kunta/AfricaOS)
 [![Code size in bytes](https://img.shields.io/github/languages/code-size/Project-Kunta/AfricaOS.svg)](https://github.com/Project-Kunta/AfricaOS)
 ![Discord](https://img.shields.io/discord/430502296699404308)
+
 A simple, customizable, proposal-based, replicated state machine (RSM), inspired by pBFT (Practical Byzantine Fault Tolerance) written in pure Rust
 
 ## Get the updated code, and documentation on XS code
+All code updates, and documentation are pushed to our sponsorship repository, and eventually pushed into this free repository. The sponsorship repository comes with extra features, detailed/updated documentation, and priority bug fixes. Subscribe to the sponsorship repository on XS Code:
 https://cp.xscode.com/Kunta-Labs/AfricaOS
 
 # To start a single node
