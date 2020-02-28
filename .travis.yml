@@ -1,9 +1,9 @@
 language: rust
-python:
-  - "3.7"
+rust:
+  - "2018"
 # command to install dependencies
 install:
   - cd core
-  - cargo install
+  - cargo build
 # command to run tests
 script: cargo check
