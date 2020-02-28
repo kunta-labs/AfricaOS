@@ -378,8 +378,8 @@ impl Transmitter for Server {
 pub trait Receiver {
     fn start(&self) -> Result<String, String>;
     fn handle_client(stream: TcpStream) -> Result<String, String>;
-    fn handle_read(mut stream: &TcpStream) -> Result<String, String>;
-    fn handle_write(mut stream: TcpStream, result: String) -> Result<String, String>;
+    fn handle_read(stream: &TcpStream) -> Result<String, String>;
+    fn handle_write(stream: TcpStream, result: String) -> Result<String, String>;
 }
 
 /*
