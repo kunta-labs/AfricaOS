@@ -70,7 +70,7 @@ stress:
 	#while true; do make txo; make create_proposal; sleep 60; done
 	#while true; do make sat; make sap; sleep 30; done
 	while true; do make stress_a; sleep 15 ; make stress_b; sleep 15 ; make stress_c; sleep 15 ; done
-	#while true; do make stress_a; sleep 60 ; done
+	#while true; do make stress_a; sleep 60 ; done 
 p_alice:
 	#curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" 127.0.0.1:8081/proposal/create/
 	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" localhost:8081/proposal/create/
