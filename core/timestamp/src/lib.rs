@@ -22,7 +22,6 @@ pub struct Timestamp {
     pub timestamp: String
 }
 
-
 /*
     @name NewTimestamp
     @desc create a new timestamp right now

@@ -1,0 +1,21 @@
+FROM aos:latest AS build
+
+EXPOSE 8082
+
+#test
+#COPY --from=build /usr/local/cargo/bin/core .
+
+#works
+####COPY --from=build /environment/target/x86_64-unknown-linux-musl/release/core .
+
+#RUN mkdir ./storage
+
+####COPY --from=build /environment/storage ./storage
+
+
+#USER 1
+#CMD ["./core node-name=\"bob's node\" node-id=2 port=8082 peers=127.0.0.1:8081,127.0.0.1:8083 ip=127.0.0.1:8082"]
+####CMD ["./core", "node-name='bobs node'", "node-id=2", "port=8082", "peers=127.0.0.1:8081,127.0.0.1:8083", "ip=127.0.0.1:8082"]
+#CMD ["./core", "node-name='bobs node'", "node-id=2", "port=8082", "peers=localhost:8081,localhost:8083", "ip=localhost:8082"]
+
+CMD ["make", "bob"]

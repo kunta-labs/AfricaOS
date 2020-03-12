@@ -50,7 +50,7 @@ This will submit a first proposal to alice, which will initiate proposal generat
 make p_alice
 ```
 
-# Stress with input/female transaction
+# Stress with output/female transaction
 To create/submit a new transaction every m minutes
 ```
 make stress

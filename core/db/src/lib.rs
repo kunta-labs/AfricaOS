@@ -17,7 +17,8 @@ along with the AfricaOS Platform. If not, see <http://www.gnu.org/licenses/>.
 extern crate lazy_static;
 
 use std::fs;
-use std::io::{Write, Error};
+use std::io::{Write, Error, ErrorKind};
+use lock::{Locker, FileLockWrite};
 
 pub struct DB {
 
@@ -30,16 +31,29 @@ pub trait NodeNameSetter {
 impl NodeNameSetter for DB {
     fn set_node_name(name: String) -> () {
         lazy_static! {
+            // TODO: variable node name
             //static ref NODENAME: String = name;
         }
     }
 }
 
 /*
+    TODO: target node's names DB directory ONLY
+    TODO: PROPOSALS_LOC needs to be relatively safe.
+    Test Proposal by itsef throws an erorr since the entry point isnt the root
+*/
+
+/*
 @desc PROPOSALS_LOC stores all proposals the network submits
 */
 const PROPOSALS_LOC: &str = "storage/proposal/";//&(format!("{}", "storage/proposal/").as_str());
 const PROPOSALS_DB_LOC: &str = "storage/proposals.db";
+
+/*
+@desc PROPOSALS_LOC stores all peer statuses on proposals
+*/
+const PROPOSALS_PEER_STATUS_LOC: &str = "storage/proposal/peer_status/";
+const PROPOSALS_PEER_STATUS_DB_LOC: &str = "storage/peer_status.db";
 
 /*
 @desc TRANSACTIONS_LOC stores all transactions the network submits
@@ -59,13 +73,15 @@ const STATES_DB_LOC: &str = "storage/states.db";
 const BLOCKS_LOC: &str = "storage/chain/";
 const BLOCKS_DB_LOC: &str = "storage/chain.db";
 
-
 pub trait DBInit{
     fn create_sql_databases() -> Result<(), std::io::Error>;
 }
 
 impl DBInit for DB {
     fn create_sql_databases() -> Result<(), std::io::Error>{
+        //TODO: create new proposals database
+        //if not exists
+
         Ok(())
     }
 }
@@ -75,12 +91,27 @@ pub trait DBWrite {
 }
 
 impl DBWrite for DB {
+    /*
+    TODO: should take a type to store
+    */
     fn write(content: String, location: String) -> Result<String,std::io::Error> {
         println!("DB write, Writing to DB");
         let file_location: String = format!("{}", location);
-        let mut file = fs::File::create(file_location.to_string())?;
-        file.write( content.as_bytes() )?;
-        Ok(content)
+        //TODO:: invoke Lock::write(content, location)
+        //let file_lock_write_result: Result<(), std::io::Error> = Locker::write(test_content,file_location);
+        let file_lock_write_result: Result<(), std::io::Error> = Locker::write(content.clone(), location);
+        //OLD
+        //let mut file = fs::File::create(file_location.to_string())?;
+        //file.write( content.as_bytes() )?;
+        match file_lock_write_result {
+            Ok(_) => {
+                Ok(content)
+            },
+            Err(e) => {
+                let db_lock_write_error = Error::new(ErrorKind::Other, "DBWrite ERROR, write(), could write with lock!");
+                Err(db_lock_write_error)
+            }
+        }
     }
 }
 
@@ -91,10 +122,11 @@ pub trait DBRead {
 impl DBRead for DB {
     fn read(file: String) -> Option<String> {
         println!("DB Read File: {}", file);
-        let contents: Result<String, std::io::Error> = fs::read_to_string(file);
+        //TODO: read with lock as well
+        let contents: Result<String, std::io::Error> = fs::read_to_string(file); //.expect("[DB Error reading file]");
         match contents {
             Ok(r) => {
-                println!("DBRead Text:\n{}", r);
+                //println!("DBRead Text:\n{}", r);
                 Some(r)
             },
             Err(e) => {
@@ -105,15 +137,78 @@ impl DBRead for DB {
 }
 
 /*
+@name DBReadProposalPeerStatus
+@desc
+*/
+
+pub trait DBReadProposalPeerStatus{
+    /*
+    @name read_proposal_peer_status
+    @desc read and return JSON proposal_status
+    {"proposal_id": {"ip": "status", }}
+    */
+    fn read_proposal_peer_status(proposal_id: i32) -> Option<String>;
+}
+
+impl DBReadProposalPeerStatus for DB {
+    fn read_proposal_peer_status(pid: i32) -> Option<String>{
+        let file_location: String = format!("{}{}",
+                                    PROPOSALS_PEER_STATUS_LOC,
+                                    format!("proposal_{}.dat", pid));
+        //let file_location: String = format!("{}",PROPOSALS_PEER_STATUS_DB_LOC);
+        match Self::read(file_location) {
+            Some(p) => Some(p),
+            None => None
+        }
+    }
+}
+
+
+pub trait DBWriteProposalPeerStatus {
+    /*
+    @name write_proposal_peer_status
+    @desc read and return JSON proposal_status
+    */
+    fn write_proposal_peer_status(pid: i32, proposal_string: String) -> Result<String, Error>;
+}
+
+impl DBWriteProposalPeerStatus for DB {
+    fn write_proposal_peer_status(pid: i32, proposal_string: String) -> Result<String, Error>{
+        let file_location: String = format!("{}{}",
+                                    PROPOSALS_PEER_STATUS_LOC,
+                                    format!("proposal_{}.prop", pid));
+        //let file_location: String = format!("{}",PROPOSALS_PEER_STATUS_DB_LOC);
+        Self::write(proposal_string, file_location);
+        Ok(String::from("write_proposal_peer_status, Ok, Successfully wrote DB JSON index"))
+    }
+}
+
+/*
 @name DBReadProposal
 @desc
 */
 pub trait DBReadProposal {
+    fn read_proposal_file_by_id(pid: i32) -> Option<String>;
     fn read_proposal_index() -> Option<String>;
     fn write_proposal_index(db_json_string: String) -> Result<String, Error>;
 }
 
 impl DBReadProposal for DB {
+
+    /*
+    @name read_proposal_file_by_id
+    @desc read and return JSON DB PROPOSAL FILE
+    */
+    fn read_proposal_file_by_id(pid: i32) -> Option<String>{
+        let file_location: String = format!("{}{}",
+                                    PROPOSALS_LOC,
+                                    format!("proposal_{}.prop", pid));
+        //let file_location: String = format!("{}",PROPOSALS_DB_LOC);
+        match Self::read(file_location) {
+            Some(p) => Some(p),
+            None => None
+        }
+    }
 
     /*
     @name read_proposal_index
@@ -134,6 +229,8 @@ impl DBReadProposal for DB {
     fn write_proposal_index(db_json_string: String) -> Result<String, Error> {
         println!("DB, write_proposal_index: Attempting to Write DB JSON INDEX");
         let file_location: String = format!("{}",PROPOSALS_DB_LOC);
+        //let mut file = fs::File::create(file_location.to_string())?;
+        //file.write( proposal_string.as_bytes() )?;
         Self::write(db_json_string, file_location);
         Ok(String::from("Ok, Successfully wrote DB JSON index"))
     }
@@ -158,6 +255,7 @@ impl DBWriteProposal for DB {
                                     PROPOSALS_LOC,
                                     format!("proposal_{}.prop", pid));
         let mut file = fs::File::create(file_location.to_string())?;
+        //TODO: will fail if directory doesn't exist, but will fail gracefully
         file.write( proposal_string.as_bytes() )?;
         println!("Wrote Proposal");
         Ok(proposal_string)
@@ -216,7 +314,6 @@ pub trait DBReadTransaction {
 }
 
 impl DBReadTransaction for DB {
-
     /*
     @name read_transaction_index
     @desc read and return JSON DB map
@@ -236,6 +333,8 @@ impl DBReadTransaction for DB {
     fn write_transaction_index(db_json_string: String) -> Result<String, Error> {
         println!("DB, write_transaction_index: Attempting to Write DB JSON INDEX for tx");
         let file_location: String = format!("{}",TRANSACTIONS_DB_LOC);
+        //let mut file = fs::File::create(file_location.to_string())?;
+        //file.write( proposal_string.as_bytes() )?;
         Self::write(db_json_string, file_location);
         Ok(String::from("Ok, Successfully wrote DB JSON index FOR TRANSACTION"))
     }
@@ -263,6 +362,7 @@ impl DBWriteTransaction for DB {
     pass string to write into db
     */
     fn write_transaction_to_sql(tid: i32, transaction_string: String) -> Result<String,std::io::Error>{
+        //write to transactions file
         println!("Writing TRANSACTION to DB");
         let file_location: String = format!("{}{}",
                                     TRANSACTIONS_LOC,
@@ -305,6 +405,8 @@ impl DBReadBlock for DB {
     fn write_block_index(db_json_string: String) -> Result<String, Error> {
         println!("DB, write_block_index: Attempting to Write DB JSON INDEX FOR BLOCK");
         let file_location: String = format!("{}",BLOCKS_DB_LOC);
+        //let mut file = fs::File::create(file_location.to_string())?;
+        //file.write( proposal_string.as_bytes() )?;
         Self::write(db_json_string, file_location);
         Ok(String::from("Ok, Successfully wrote DB JSON index FOR BLOCK"))
     }
@@ -401,8 +503,5 @@ impl FileDirectoryReader for DB {
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
+
 }

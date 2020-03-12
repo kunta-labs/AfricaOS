@@ -18,7 +18,6 @@ use std::thread;
 use std::io::{Write, Read};
 use http::{Request, Response, StatusCode};
 use std::collections::HashMap;
-
 use proposal::{Proposal,
                NewProposal,
                JsonConverter,
@@ -33,11 +32,9 @@ use proposal::{Proposal,
                CompareWithoutStatus,
                ValidateProposalBlock,
                ProposalResolutionAccepted};
-
 use url::Url;
 use reqwest::header::{USER_AGENT, CONTENT_TYPE, ORIGIN};
 use encode::{Encoder, Base64Encode, Base64Decode};
-
 use transaction::{Transaction, CreateNewOuputTransaction};
 
 pub trait PayloadParser {
@@ -70,14 +67,14 @@ impl PayloadParser for Server {
     }
 
     fn get_key_from_header(section: &str, header_sections: Vec<&str>) -> Result<String, String> {
-        if header_sections.len() == 2 { //if there is just a key, and a value in the header
+        if header_sections.len() == 2 {
             let data_second_element: &str = header_sections[1];
             println!("Data data_second_element: {}", data_second_element);
             let string_to_trunc: String = String::from(data_second_element);
             let mut header_data: &str = string_to_trunc.trim();
             let final_header_data: String = String::from(header_data);
             Ok(final_header_data)
-        } else if header_sections.len() == 3 { // if the header has a colon in the value, such as IPAddress:Port
+        } else if header_sections.len() == 3 {
             let data_second_element: &str = header_sections[1];
             let data_third_element: &str = header_sections[2];
             let string_to_trunc: String = format!("{}:{}", data_second_element, data_third_element);
@@ -150,7 +147,6 @@ pub struct Server {
     pub port: i32,
 }
 
-
 /*
 @name Transmitter
 @desc this trait enables our server to transmit data over the network
@@ -163,7 +159,7 @@ pub trait Transmitter{
           create to the network
     */
     fn broadcast_proposal_created(proposal: Proposal, peer_location: String, ip: String) -> Result<(), String>;
-    //fn broadcast_proposal_created(proposal: Proposal) -> Result<reqwest::response::Response, reqwest::error::Error>;
+
     /*
     @name broadcast_proposal_response
     @desc broadcast the proposal response to
@@ -248,6 +244,7 @@ impl Transmitter for Server {
             let client = reqwest::Client::new();
             let proposal_to_json: String = Proposal::to_json(proposal.clone()).to_string();
             let b64_stringed_proposal: Result<String,String> = Encoder::encode_base64(proposal_to_json);
+            //TODO: alter a meaningful header, not user agent...
             if b64_stringed_proposal.is_ok() {
                 let resp = client.get(peer_location_url)
                                  .header(ORIGIN, ip.as_str())
@@ -284,9 +281,9 @@ impl Transmitter for Server {
             let client = reqwest::Client::new();
             let proposal_to_json: String = Proposal::to_json(proposal.clone()).to_string();
             let b64_stringed_proposal: Result<String,String> = Encoder::encode_base64(proposal_to_json);
+            //TODO: alter a meaningful header, not user agent...
             if b64_stringed_proposal.is_ok() {
                 let resp = client.get(peer_location_url)
-                                 //.header(ORIGIN, "MYIPADDRESS")
                                  .header(ORIGIN, ip.as_str())
                                  .header(USER_AGENT, b64_stringed_proposal.unwrap())
                                  .send();
@@ -301,7 +298,6 @@ impl Transmitter for Server {
                     }
                  }
             } else {
-                //Err(String::from("Error: broadcast_proposal_createm, Encoder::encode could not encode for some reason"))
                 Ok(())
             }
         }
@@ -329,9 +325,7 @@ impl Transmitter for Server {
                     Ok(())
                 }
             }
-
         }
-
 
         /*
             @name broadcast_block_query_response
@@ -346,10 +340,10 @@ impl Transmitter for Server {
             let client = reqwest::Client::new();
             let proposal_to_json: String = Proposal::to_json(proposal.clone()).to_string();
             let b64_stringed_proposal: Result<String,String> = Encoder::encode_base64(proposal_to_json);
+            //TODO: alter a meaningful header, not user agent...
             if b64_stringed_proposal.is_ok() {
                 println!( "broadcast_block_query_response(), b64_stringed_proposal{}", b64_stringed_proposal.clone().unwrap() );
                 let resp = client.get(peer_location_url)
-                                 //.header(ORIGIN, "MYIPADDRESS")
                                  .header(ORIGIN, "127.0.0.1")
                                  .header(USER_AGENT, b64_stringed_proposal.unwrap())
                                  .send();
@@ -367,7 +361,6 @@ impl Transmitter for Server {
                 Ok(())
             }
         }
-
 }
 
 
@@ -392,9 +385,6 @@ impl Receiver for Server {
     @desc this starts the TCP server
     */
     fn start(&self) -> Result<String, String> {
-        //loopback address
-        //let server_prefix = String::from("127.0.0.1:");
-        //all interfaces available on the system
         let server_prefix = String::from("0.0.0.0:");
         let port = self.port;
         let server_complete_address = format!("{}{}", server_prefix, port);
@@ -434,6 +424,7 @@ impl Receiver for Server {
                 Err(String::from("ERROR: read_result failed..."))
             }
         };
+
         if read_result.is_ok() {
             let write_result = match Self::handle_write(stream, read_result.unwrap() ) {
                 Ok(write_result) => {
@@ -468,11 +459,13 @@ impl Receiver for Server {
                 println!("handle_read, Query: {}", query);
                 let split_payload_for_data: Vec<&str> = req_str.split("\n").collect();
                 let data: Result<String, String> = Self::get_header_from_payload(split_payload_for_data.clone(), "user-agent");
+                //TODO: state which header to return
                 if data.is_ok() {
                     //TODO: get node IP address to send to receiver to pass to invoke action
                     let request_origin: Result<String, String> = Self::get_header_from_payload(split_payload_for_data, "origin");
                     if request_origin.is_ok() {
                         println!("request_origin success: {}", request_origin.clone().unwrap());
+                        //TODO: pass request_origin to invoke_action()
                         let invoked_action_result: Result<String, String> = Self::invoke_action( query, &(data.unwrap().to_string()), request_origin.clone().unwrap() );
                         match invoked_action_result {
                             Ok(r) => {
@@ -503,12 +496,14 @@ impl Receiver for Server {
           writing of data back to the requestor
     */
     fn handle_write(mut stream: TcpStream, result: String) -> Result<String, String> {
+
         let response = b"HTTP/1.1 200 OK
                        \r\nContent-Length: 10
                        \r\nContent-Type: application/json; charset=UTF-8
                        \r\n\r\nRESPONSE FROM NODE
                        \r\n";
-
+        //TODO: WRITE BACK THE RESULT PASSED
+        //let data_to_write: String = format!("{}");
         match stream.write(response) {
             Ok(_) => {
                 println!("handle_write, Stream Write Success");
@@ -535,6 +530,7 @@ pub trait API {
     fn invoke_action(command: &str, data: &str, request_origin: String) -> Result<String, String>;
 }
 
+
 /*
 @name API for Server
 @desc invoked actions by implementing this trait
@@ -547,8 +543,8 @@ impl API for Server {
     fn invoke_action(command: &str, data: &str, request_origin: String) -> Result<String, String> {
         match command {
             /*
-                @endpoint /transaction/submit/output/
-                @desc for an external submission of a transaction
+            @endpoint /transaction/submit/output/
+            @desc for an external submission of a transaction
             */
             "/transaction/submit/output" => {
                 println!("Transaction Submit: {}, {}, {}", command, data, request_origin);
@@ -567,14 +563,13 @@ impl API for Server {
             },
 
             /*
-                @endpoint /proposal/create/
-                @desc create a proposal
-                peerid, proposalid
-                "INVOKES" A -> B
+            @endpoint /proposal/create/
+            @desc create a proposal, NOTE: should we expose this externally?
+            peerid, proposalid
+            "INVOKES" A -> B
             */
             "/proposal/create/" => {
                 println!("Invocation to create new proposal: {}", data);
-                //create proposal
                 let proposal_created: Option<Proposal> = Proposal::create(request_origin);
                 match proposal_created {
                     Some(proposal) => {
@@ -586,10 +581,10 @@ impl API for Server {
             },
 
             /*
-                @endpoint /proposal/created/
-                @desc receive a proposal created by someone else
-                peerid, proposalid?
-                A -> B, AS B
+            @endpoint /proposal/created/
+            @desc receive a proposal created by someone else
+            peerid, proposalid?
+            A -> B, AS B
             */
             "/proposal/created/" => {
                 let decoded_proposal_string: Result<String, String> = Encoder::decode_base64(String::from(data));
@@ -600,8 +595,10 @@ impl API for Server {
                     match decoded_proposal.clone() {
                         Ok(proposal) => {
                             println!("invoke_action, proposal_created: successful proposal decoding, proposal_id: {}", decoded_proposal.unwrap().proposal_id);
+                            //TODO: Check current block ID against the proposal block_id to see if network's chain is ahead of the node's chain
                             //proposal verdict
                             match Proposal::validate_proposal(proposal.clone()) {
+                                //NOTE: ONLY DO SOMETHING IF YOU CAN SAFELY PARSE THE PROPOSAL, OTHERWISE ERROR
                                 Ok(verdict) => {
                                     match verdict {
                                         ProposalValidationResult::Valid => {
@@ -641,9 +638,9 @@ impl API for Server {
             },
 
             /*
-                @endpoint /proposal/response/
-                @desc get responses to a proposal request from peers
-                A <- B, B back to A
+            @endpoint /proposal/response/
+            @desc get responses to a proposal request from peers
+            A <- B, B back to A
             */
             "/proposal/response/" => {
                 println!("Proposal response received: {}", data);
@@ -652,15 +649,22 @@ impl API for Server {
                     println!("invoke_action(), proposal_response - Success: Received a proposal RESPONDED by another node: {}::{}", data, decoded_proposal_string.clone().unwrap());
                     println!("Decoded Proposal String: {:?}", decoded_proposal_string);
                     let decoded_proposal: Result<Proposal, String> = Proposal::from_json_string(decoded_proposal_string.unwrap());
+                    //TODO: check if we have a proposal with that id
                     let all_proposals: Option<Vec<Proposal>> = Proposal::get_last_n_proposals();
                     if decoded_proposal.is_ok() {
+                        //SYNC CHECK
+
+                        //TODO: search for proposal
+                        //TODO: Breakout into Proposal::find_proposal
                         let found_proposal: Option<Proposal> = match all_proposals {
                             Some(proposals) => {
                                 let mut same_proposal: Option<Proposal> = None;
                                 for proposal in proposals {
                                     if Proposal::compare_without_status(proposal.clone(), decoded_proposal.clone().unwrap() ) {
                                         println!("/proposal/response/, proposals are equal");
+                                        //if we have the proposal, check its status
                                         same_proposal = Some(proposal);
+                                        // TODO: can safely break for proposal in proposals iteration
                                     } else {
                                         println!("/proposal/response/, proposals are NOT equal");
                                     }
@@ -671,19 +675,31 @@ impl API for Server {
                                 None
                             }
                         };
+
+                        //TODO: IF WE FOUND THE SUBMITTED PROPOSAL IN OUR LOCAL SET
                         if found_proposal.is_some() {
                             match found_proposal.clone().unwrap().proposal_status {
+                                //TODO: IF WE CREATED THE PROPOSAL
+                                //TODO: CHECK IF THIS NODE CREATED THE PROPOSALS
                                 ProposalStatus::Created => {
+                                    //TODO: update how many votes the proposal has
+                                    //TODO CHECK IF THE AMOUNT OF VOTES IS ENOUGH TO SAY "ACCEPTED"
                                     match decoded_proposal.clone().unwrap().proposal_status {
-                                        ProposalStatus::Accepted => {
+                                        ProposalStatus::Accepted | ProposalStatus::AcceptedBroadcasted => {
+                                            // TODO: set the proposal db
                                             Proposal::add_peer_status_to_proposal(found_proposal.clone().unwrap(),
                                                                                   ProposalStatus::Accepted,
                                                                                   request_origin);
+                                            //TODO: WE CREATED IT AND WE JUST RECEIVED AN ACCEPTANCE
+                                            //TODO: DO NOT SET TO ACCEPTED BY NETWORK HERE
                                         },
-                                        ProposalStatus::Rejected => {
+                                        ProposalStatus::Rejected | ProposalStatus::RejectedBroadcasted => {
                                             Proposal::add_peer_status_to_proposal(found_proposal.clone().unwrap(),
                                                                                   ProposalStatus::Rejected,
                                                                                   request_origin);
+                                            //TODO: WE CREATED IT AND WE JUST RECEIVED A REJECTION
+                                            //TODO: DO NOT SET TO ACCEPTED BY NETWORK HERE
+                                            //Proposal::update_proposal(found_proposal.clone().unwrap(), "rejected_by_network");
                                         },
                                         _ => {
 
@@ -691,18 +707,16 @@ impl API for Server {
                                     }
                                     Ok(String::from("Proposal response: Successfully parsed"))
                                 },
-
+                                // TODO ProposalStatus::AcceptedBroadcasted
                                 ProposalStatus::AcceptedByNetwork => {
+                                    //TODO: update how many votes the proposal has
+                                    //TODO CHECK IF THE AMOUNT OF VOTES IS ENOUGH TO SAY "ACCEPTED"
                                     match decoded_proposal.clone().unwrap().proposal_status {
                                         ProposalStatus::Accepted => {
-
                                             //TODO: WE CREATED IT AND WE JUST RECEIVED AN ACCEPTANCE
-
                                         },
                                         ProposalStatus::Rejected => {
-
                                             //TODO: WE CREATED IT AND WE JUST RECEIVED A REJECTION
-
                                         },
                                         _ => {
 
@@ -711,15 +725,14 @@ impl API for Server {
                                     Ok(String::from("Proposal response: Successfully parsed"))
                                 },
                                 ProposalStatus::Committed => {
+                                    //TODO: update how many votes the proposal has
+                                    //TODO CHECK IF THE AMOUNT OF VOTES IS ENOUGH TO SAY "ACCEPTED"
                                     match decoded_proposal.clone().unwrap().proposal_status {
                                         ProposalStatus::Accepted => {
-
                                             //TODO: WE CREATED IT AND WE JUST RECEIVED AN ACCEPTANCE
-
                                         },
                                         ProposalStatus::Rejected => {
                                             //TODO: WE CREATED IT AND WE JUST RECEIVED A REJECTION
-
                                         },
                                         _ => {
 
@@ -737,25 +750,34 @@ impl API for Server {
                     } else {
                         Err(String::from("Proposal response: Error: decoded_proposal is NOT OK"))
                     }
+
                 } else {
                     println!("invoke_action() - Error: could not decode proposal in proposal_response: {}", data);
                     Err(String::from(""))
                 }
+                //TODO 1: check DB for proposal ID, and status
+                //TODO 2: store response in DB
+                //TODO 3: if responses proposal is valid
+                    //verify if the proposal's response received completes "round"
             },
 
             /*
-                @endpoint /proposal/resolution/
-                @desc notify peers that you have commited
+            @endpoint /proposal/resolution/
+            @desc notify peers that you have commited
                   to a resolution.
             */
             "/proposal/resolution/" => {
                 println!("Resolution received: {}", data);
+                //TODO: resolve only if our consensus goal is met
                 let decoded_proposal_string: Result<String, String> = Encoder::decode_base64(String::from(data));
                 if decoded_proposal_string.clone().is_ok() {
                     println!("invoke_action(), proposal_resolution - Success: Received a proposal RESOLUTION by another node: {}::{}", data, decoded_proposal_string.clone().unwrap());
+                    //TODO: check if we have a proposal with that id
                     let decoded_proposal: Result<Proposal, String> = Proposal::from_json_string(decoded_proposal_string.unwrap());
                     let all_proposals: Option<Vec<Proposal>> = Proposal::get_last_n_proposals();
                     if decoded_proposal.is_ok() {
+                        //TODO: search for proposal
+                        //TODO: Breakout into Proposal::find_proposal
                         let found_proposal: Option<Proposal> = match all_proposals {
                             Some(proposals) => {
                                 let mut same_proposal: Option<Proposal> = None;
@@ -763,6 +785,7 @@ impl API for Server {
                                     if Proposal::compare_without_status(proposal.clone(), decoded_proposal.clone().unwrap() ) {
                                         println!("/proposal/resolution/, proposals are equal");
                                         same_proposal = Some(proposal);
+                                        // TODO: can safely break for proposal in proposals iteration
                                     } else {
                                         println!("/proposal/resolution/, proposals are NOT equal");
                                     }
@@ -773,14 +796,17 @@ impl API for Server {
                                 None
                             }
                         };
-
+                        //TODO: IF WE FOUND THE SUBMITTED PROPOSAL IN OUR LOCAL SET
+                        //TODO: maybe change to same_proposal.is_some()?
                         if found_proposal.is_some() {
                             println!("invoke_action(), proposal_resolution - WE FOUND A LOCAL PROPOSAL MATCH");
                             match found_proposal.clone().unwrap().proposal_status {
+                                //TODO: CHECK IF THIS NODE ACCEPTED THE PROPOSAL AND BROADCASTED ALREADY
                                 ProposalStatus::AcceptedBroadcasted => {
                                     println!("invoke_action(), proposal_resolution - FOUND PROPOSAL STATUS IS ACCEPTEDBROADCASTED");
                                     match Proposal::validate_proposal_resolution(found_proposal.clone().unwrap(), decoded_proposal.clone().unwrap()){
                                         Ok(_) => {
+                                            //TODO CHECK IF THE AMOUNT OF VOTES IS ENOUGH TO SAY "COMMITTED"
                                             Proposal::update_proposal(found_proposal.clone().unwrap(),
                                             "committed");
                                             Ok(String::from("Proposal resolution: Successfully parsed"))
@@ -810,7 +836,6 @@ impl API for Server {
                 }
             },
 
-
             /*
                 @endpoint /state/get/
                 @desc get the state from the DB
@@ -821,28 +846,31 @@ impl API for Server {
             },
 
             /*
-                @endpoint /block/query/
-                @desc when a node requests a specific block
+            @endpoint /block/query/
+            @desc when a node requests a specific block
             */
             "/block/query/" => {
+                // TODO: another node asked for a block by its ID, respond with proposal with block id, and commited
                 println!("block query received: {} | {} | {}", command, data, request_origin);
                 let all_proposals: Option<Vec<Proposal>> = Proposal::get_last_n_proposals();
+                //TODO: Breakout into Proposal::find_proposal
                 let found_proposal: Option<Proposal> = match all_proposals {
                     Some(proposals) => {
                         let mut same_proposal: Option<Proposal> = None;
                         for proposal in proposals {
+                            //TODO: data parse here could be broken out of line to be checked against
                             if proposal.clone().proposal_block.block_id == data.parse::<i64>().unwrap() {
                                 println!("/block/query/, proposal.block_id matches requested block_id");
                                 if proposal.clone().proposal_status == ProposalStatus::Committed {
                                     println!("/block/query/, proposal status IS INDEED COMMITED, RESPOND WITH IT!");
                                     same_proposal = Some(proposal);
+                                    // TODO: can safely break for proposal in proposals iteration
                                 } else {
                                     println!("/block/query/, ERROR proposal STATUS IS NOT COMMITED, DON'T RESPOND WITH IT");
                                 }
                             } else {
                                 println!("/block/query/, proposal.block_id does not match requested block_id");
                             }
-
                         }
                         same_proposal
                     },
@@ -859,14 +887,17 @@ impl API for Server {
             },
 
             /*
-                @endpoint /block/response/
-                @desc after a node requests a block, the block is sent to this endpoint in response
+            @endpoint /block/response/
+            @desc after a node requests a block, the block is sent to this endpoint in response
+
             */
             "/block/response/" => {
+                // TODO: the response is a proposal, containing a block
                 println!("Received Block from a peer AFTER QUERYING FOR IT");
                 let decoded_proposal_string: Result<String, String> = Encoder::decode_base64(String::from(data));
                 if decoded_proposal_string.clone().is_ok() {
                     println!("invoke_action(), block received AFTER QUERING FOR IT - Success: queryied for block: {}", data);
+                    //TODO: check if we have a proposal with that id
                     let decoded_proposal: Result<Proposal, String> = Proposal::from_json_string(decoded_proposal_string.unwrap());
                     match decoded_proposal {
                         Ok(mut proposal) => {
@@ -884,9 +915,8 @@ impl API for Server {
                 } else {
                     Err(String::from("Block response, proposal.decode_base64() FAILED"))
                 }
-
             },
-
+            // default case
             _ => Err(String::from("API endpoint not correct"))
         }
     }
@@ -906,12 +936,11 @@ mod tests {
                                            \r\nUser-Agent: example
                                            \r\n\r\nRESPONSE FROM NODE
                                            \r\n");
-
-
         let payload_split: Vec<&str> = payload.split("\n").collect();
         let data: Result<String, String> = Server::get_header_from_payload(payload_split, "user-agent");
         assert_eq!(data, Ok(String::from("example")));
     }
+
 
     #[test]
     fn test_parse_origin_for_header() {
@@ -922,10 +951,8 @@ mod tests {
                                            \r\nOrigin: 127.0.0.1
                                            \r\n\r\nRESPONSE FROM NODE
                                            \r\n");
-
         let payload_split: Vec<&str> = payload.split("\n").collect();
         let data: Result<String, String> = Server::get_header_from_payload(payload_split, "origin");
         assert_eq!(data, Ok(String::from("127.0.0.1")));
     }
-
 }

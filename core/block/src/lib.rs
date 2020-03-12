@@ -97,11 +97,13 @@ impl ReadBlockFromDB for DB {
     fn get_block_index_as_json() -> Option<JsonValue> {
         let block_index: String = match DB::read_block_index() {
             Some(i) => {
+                //TODO: parse/verify proposal index
                 i
             },
             None => String::from("NO INDEX")
         };
         println!("Block index: {}", block_index);
+        //TODO: convert DB json string to json
         let parsed_result: Result<JsonValue, json::Error> = json::parse( &format!(r#"{}"#, block_index) );
         match parsed_result {
             Ok(parsed) => {
@@ -119,23 +121,74 @@ impl ReadBlockFromDB for DB {
     /*
     @name get_latest_block_id
     @desc get the block id
+    */
+    // fn get_latest_block_id() -> Option<i64> {
+    //     let block_index_parsed_option: Option<JsonValue> = Self::get_block_index_as_json();
+    //
+    //     match block_index_parsed_option {
+    //         Some(block_index_parsed) => {
+    //             let all_blocks = &block_index_parsed["blocks"];
+    //
+    //             if all_blocks.is_empty() {
+    //                 //None
+    //                 Some(-1)
+    //             } else {
+    //                 let mut highest_block_id: i64 = -1;
+    //                 // // iterate over each proposal entry
+    //                 let blocks_iter = all_blocks.entries();
+    //                 for (id, block_iter) in blocks_iter {
+    //
+    //                     println!("get_latest_block_id(), block: iter {}:{}", id, block_iter);
+    //                     let block_from_json: Result<Block, String> = Block::from_json( (*block_iter).clone() );
+    //                     match block_from_json {
+    //                         Ok(block) => {
+    //                             if block.block_id > highest_block_id {
+    //                                 highest_block_id = block.block_id;
+    //                             } else {
+    //                                 println!("get_latest_block_id(), block id not higher than highest_block_id: {}", block.block_id);
+    //                             }
+    //                         },
+    //                         Err(_) => {
+    //                             println!("Couldn't convert JSON block to Block type");
+    //                         }
+    //                     }
+    //                 }
+    //                 ///////////////////////////////
+    //                 Some(highest_block_id)
+    //             }
+    //         },
+    //         None => None
+    //     }
+    //
+    //
+    // }
+
+    /*
+    @name get_latest_block_id
+    @desc get the block id
     @fix - without the loop
     */
     fn get_latest_block_id() -> Option<i64> {
         let block_index_parsed_option: Option<JsonValue> = Self::get_block_index_as_json();
+
         match block_index_parsed_option {
             Some(block_index_parsed) => {
                 let all_blocks = &block_index_parsed["blocks"];
 
                 if all_blocks.is_empty() {
+                    //None
                     Some(-1)
                 } else {
+                    // if the length is 1, that means the next block number should be 1
+                    // if the length is 2, that means the next block number should be 2
                     let mut amount_of_blocks: i64 = all_blocks.len() as i64;
                     Some(amount_of_blocks - 1)
                 }
             },
             None => None
         }
+
+
     }
 
     /*
@@ -143,15 +196,19 @@ impl ReadBlockFromDB for DB {
     @desc get all proposals from the proposals directory
     */
     fn get_all_blocks() -> Option<Vec<Block>> {
+        //TODO: read proposal index
         let parsed: Option<JsonValue> = Self::get_block_index_as_json();
         match parsed {
             Some(parsed) => {
                 let mut all_blocks_vector: Vec<Block> = Vec::new();
                 let blocks_iter = parsed["blocks"].entries();
+                //let blocks_iter = parsed.members();
                 for (id, block) in blocks_iter {
+                    //println!("get_all_blocks(), block: {}:{}", id, block);
                     let parsed_block: Result<Block, String> = Block::from_json(block.clone());
                     match parsed_block {
                         Ok(block) => {
+                            //TODO: DB::index_block_sync_check(block)
                             all_blocks_vector.push(block);
                         },
                         Err(err) => {
@@ -167,6 +224,10 @@ impl ReadBlockFromDB for DB {
         }
     }
 
+    /*
+    @name get_block_by_block_id
+    @desc
+    */
     fn get_block_by_block_id(block_id: i64) -> Option<Block> {
         let block_string_result: Option<String> = Self::read_block(block_id);
         match block_string_result {
@@ -185,6 +246,7 @@ impl ReadBlockFromDB for DB {
     }
 
 }
+
 
 /*
 @name WriteProposalToDB
@@ -242,11 +304,9 @@ impl CreateNewBlock for Block {
                 }
             }
         };
-
+        //TODO: Retrieve Transactions from TX pool
         let transactons_from_pool: Vec<Transaction> = DB::get_all_transactions();
-
         println!("CreateNewBlock, transactons_from_pool, tx count: {}", transactons_from_pool.len());
-
         match new_block_time {
             Some(ts) => {
                 Ok(Block {
@@ -393,6 +453,7 @@ impl VerifyBlockAnscestry for Block {
                 false
             }
         }
+
     }
 }
 
@@ -410,6 +471,7 @@ impl ValidateAcceptedProposalBlock for Block {
         match current_block_id {
             Some(block_id) => {
                 println!("validate_block, after current_block_id, block_id: {}", block_id);
+                //TODO: CHECK IF GENESIS Block
                 if block_id == 0 {
                     Self::process_genesis_block(block)
                 } else if block_id > 0 {
@@ -419,6 +481,7 @@ impl ValidateAcceptedProposalBlock for Block {
                 }
             }
             None => {
+
                 false
             }
         }
@@ -437,14 +500,22 @@ trait ProcessBlock {
 impl ProcessBlock for Block {
     fn process_genesis_block(submitted_block: Block) -> bool {
         println!("PROCESSING GENESIS BLOCK, submitted_block_id: {}", submitted_block.block_id);
+        //TODO: COMPARE WITH BLOCKCHAIN CONFIG
+        //TODO: CALL CHAIN LOGIC BLOCKVALIDATION
         Transaction::execute_block_transactions(submitted_block.transactions);
         true
     }
 
     fn process_nongenesis_block(submitted_block: Block) -> bool {
         println!("PROCESSING NONGENESIS BLOCK, submitted_block_id: {}", submitted_block.block_id);
+        //TODO: PROBLEM
+        //if we get the block with block id - 1, we just get the block "before" the submitted block
+        // might want to just get the latest block....?
+        //let current_block_id: Option<i64> = DB::get_latest_block_id();
+        //let current_block_by_id: Option<Block> = DB::get_block_by_block_id( current_block_id.unwrap() );
         let previous_block_by_id: Option<Block> = DB::get_block_by_block_id(submitted_block.block_id - 1);
         if previous_block_by_id.clone().is_some() {
+            //TODO: verify parent hash
             match Self::verify_block_anscestry(previous_block_by_id.clone().unwrap(),
                                                submitted_block.clone()) {
                 true => {
@@ -456,6 +527,7 @@ impl ProcessBlock for Block {
                 }
             }
 
+            //TODO: Self.verify_block_id(submitted_block, current_block_by_id);
             match submitted_block.clone().block_id
                   ==
                   (previous_block_by_id
@@ -466,12 +538,42 @@ impl ProcessBlock for Block {
                 },
                 false => {
                     println!("process_nongenesis_block, SUBMITTED_BLOCK ID IS [NOT] EQUAL TO MY BLOCK ID + 1, ERROR");
-                    let current_block_id_option: Option<i64> = DB::get_latest_block_id();
+                    //TODO modularize out into a is_valid_current_block(submitted_block)
+                    let current_block_id_option: Option<i64> = DB::get_latest_block_id();  // Get my latest block
                     match current_block_id_option {
                         Some(current_block_id) => {
                             let current_block_by_id_option: Option<Block> = DB::get_block_by_block_id(current_block_id);
                             match current_block_by_id_option {
                                 Some(current_block_by_id) => {
+
+                                      // if block ids are the same
+                                      // match ( submitted_block.clone().block_id == (current_block_by_id.clone().block_id) )
+                                      //       &&
+                                      //       // if the parent hashes are the same
+                                      //       ( submitted_block.clone().block_parent_hash == current_block_by_id.clone().block_parent_hash )
+                                      //       &&
+                                      //       // different block hashes
+                                      //       ( submitted_block.clone().block_hash != current_block_by_id.clone().block_hash ) {
+                                      //     true => {
+                                      //         println!("process_nongenesis_block, BLOCK ID MATCH MY TOP BLOCK, AND PARENT HASHES MATCH, and BLOCK HASHES ARE NOT THE SAME - SUCCESS");
+                                      //     },
+                                      //     false => {
+                                      //         println!("process_nongenesis_block ERROR!, BLOCK ID MATCH MY TOP, BLOCK AND PARENT HASHES DONT MATCH, and BLOCK HASHES ARE NOT THE SAME - ERROR");
+                                      //         return false
+                                      //     }
+                                      // }
+
+                                      /*
+                                      match current_block {
+                                          _ if current_block.block_hash == proposed_block.block_parent_hash => {
+                                              true
+                                          },
+                                          _ => {
+                                              false
+                                          }
+                                      }
+                                      */
+                                      //return false
 
                                 },
                                 None => {
@@ -479,9 +581,8 @@ impl ProcessBlock for Block {
                                     return false
                                 }
                             }
-
                         },
-
+                        //current_block_id_option is NONE
                         None => {
                             println!("process_nongenesis_block, current_block_id_option is NONE");
                             return false
@@ -490,9 +591,16 @@ impl ProcessBlock for Block {
                     }
                 }
             }
+
+            //TODO: MACRO: CUSTOM_BLOCK_VALIDATION!()
+            // AFTER CHECKING IF BLOCK ID IS RIGHT SEQUENCE
+            //TODO: verify block hash
+            //TODO: CALL CHAIN LOGIC BLOCKVALIDATION
+            //TODO: error handling
             Transaction::execute_block_transactions(submitted_block.transactions);
             true
         } else {
+            //current block by block id is NOT SOME
             false
         }
     }
@@ -543,6 +651,9 @@ impl CommitBlock for Block {
     }
 
     fn commit_block(block: Block) -> Result<(), ()> {
+        //TODO: get higher block id
+        //TODO: verify the ledger history (within window) is valid
+        //TODO: if it is valid, actually write block to blocks directory, and alter block_index
         let mut block_index_option: Option<JsonValue> = DB::get_block_index_as_json();
         match block_index_option {
             Some(mut block_index) => {
@@ -566,6 +677,7 @@ impl CommitBlock for Block {
                         }
                     },
                     Err(_) => {
+                        //couldnt insert new block into index
                         Err(())
                     }
                 }
@@ -575,6 +687,7 @@ impl CommitBlock for Block {
     }
 }
 
+//TODO: change access to DB directly for modules calling ReadBlockFromDB - later
 pub trait ReadBlock {
     fn get_latest_block_id() -> Option<i64>;
 }
@@ -609,7 +722,6 @@ mod tests {
             \"proposal_hash\": \"test proposal hash\",
             \"block_data\": \"test block data\"
         }";
-
         let actual_block: Result<Block, String> = Block::from_string( String::from(stringed_block) );
         assert_eq!(actual_block.unwrap(), expected_block);
     }
@@ -624,7 +736,6 @@ mod tests {
             "proposal_hash" => "hash",
             "block_data" => "data",
         };
-
         let expected_block: Block = Block {
             block_id: 0,
             block_hash: String::from("hash"),
@@ -633,9 +744,7 @@ mod tests {
             proposal_hash: String::from("hash"),
             block_data: String::from("data"),
         };
-
         let actual_block: Result<Block, String> = Block::from_json(data);
         assert_eq!(expected_block, actual_block.unwrap());
-
     }
 }

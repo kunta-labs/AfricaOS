@@ -15,17 +15,18 @@ along with the AfricaOS Platform. If not, see <http://www.gnu.org/licenses/>.
 
 #[macro_use]
 extern crate json;
+
 use json::{JsonValue};
 use db::{DB,
          DBReadTransaction,
          FileDirectoryReader,
          DBWriteTransaction,
          DBStateManager};
-
 use std::io::{Error, ErrorKind};
 use timestamp::{Timestamp, NewTimestamp, StringToTimestamp};
 use hash::{Hasher, CalculateSHA256Hash};
 use encode::{Encoder, Base64Encode, Base64Decode};
+use executor::{Executor, ExecuteMacro};
 
 /*
 @name Transaction
@@ -72,6 +73,7 @@ trait StringToTransactionType {
 impl TransactionTypeToString for Transaction {}
 impl StringToTransactionType for Transaction {}
 
+
 /*
     @name HashTransaction
     @desc hash the contents of a transaction
@@ -117,6 +119,9 @@ pub trait JsonConverter {
     */
     fn tx_vec_from_json(payload: JsonValue) -> Result<Vec<Transaction>, String>;
 
+    /*
+    @name tx_vec_from_json
+    */
     fn json_from_tx_vec(transactions: Vec<Transaction>) -> Result<JsonValue, String>;
 }
 
@@ -169,7 +174,6 @@ impl JsonConverter for Transaction {
 
     }
 
-
     fn from_json_string(json_string: String) -> Result<Transaction, String> {
         let json_parsed_tx = json::parse( &format!(r#"{}"#, json_string) ).unwrap();
         Self::from_json(json_parsed_tx)
@@ -209,8 +213,6 @@ impl JsonConverter for Transaction {
         Ok(new_transaction_index)
     }
 }
-
-///// END JSON TX
 
 pub trait ReadTransactionFromDB {
     fn get_all_transactions() -> Vec<Transaction>;
@@ -271,7 +273,6 @@ impl ReadTransactionFromDB for DB {
     }
 }
 
-
 trait TransactionIndexReader {
     fn get_transaction_index_as_json() -> JsonValue;
 }
@@ -280,17 +281,18 @@ impl TransactionIndexReader for DB {
     fn get_transaction_index_as_json() -> JsonValue {
         let transaction_index: String = match Self::read_transaction_index() {
             Some(i) => {
+                //TODO: parse/verify proposal index
                 i
             },
             None => String::from("NO TRANSACTION INDEX")
         };
         println!("Transaction index: {}", transaction_index);
+        //TODO: convert DB json string to json
         let parsed = json::parse( &format!(r#"{}"#, transaction_index) ).unwrap();
         println!("get_transaction_index_as_json(), transaction index parsed: {}", parsed["transactions"]);
         parsed
     }
 }
-
 
 /*
 @name CreateTransactionIndex
@@ -321,7 +323,6 @@ impl CreateTransactionIndex for Transaction {
     }
 }
 
-
 /*
     @name ClearTransactionIndex
     @desc make the transaction index empty again after block commitment
@@ -338,12 +339,6 @@ impl ClearTransactionIndex for Transaction {
         let db_index_write_result = DB::write_transaction_index(empty_transaction_string.dump());
     }
 }
-
-
-
-
-/////////////////////// TX DB WRITE work
-
 
 /*
 @name WriteTransactionToDB
@@ -364,8 +359,12 @@ impl WriteTransactionToDB for DB {
     */
     fn write_transaction(transaction: Transaction) -> Result<String,std::io::Error> {
         println!("inside write_transaction, DB trait");
+        //TODO: convert from Proposal to JSON
         let transaction_string: String = Transaction::to_json(transaction.clone());
+        //TODO: Read transaction index JSON
+        //TODO: pass Node Peer name
         let mut parsed: JsonValue = Self::get_transaction_index_as_json();
+        //TODO: alter proposal index json object
         let new_transaction_entry = object!{
             "transaction_id" => transaction.transaction_id,
             "transaction_timestamp" => transaction.transaction_timestamp.timestamp,
@@ -375,29 +374,28 @@ impl WriteTransactionToDB for DB {
             "transaction_data" => transaction.transaction_data,
             "transaction_hash" => transaction.transaction_hash
         };
+
         let tindex_insert_result: Result<String, Error> = match parsed["transactions"]
               .insert( &(format!("{}", transaction.transaction_id).to_string() ),
                        new_transaction_entry) {
             Ok(_) => {
                 println!("New Transaction JSON: {}", parsed.dump());
-                let db_write_result: Result<String, std::io::Error> = Self::write_transaction_to_sql(transaction.transaction_id,
-                                                                                                     transaction_string.clone());
+                //TODO: commit proposal to DB
+                let db_write_result: Result<String, std::io::Error> = Self::write_transaction_to_sql(transaction.transaction_id, transaction_string.clone());
                 if db_write_result.is_ok() {
+                    //TODO: commit proposal index to DB
                     let db_index_write_result = Self::write_transaction_index(parsed.dump());
                     db_index_write_result
                 } else {
                     let transaction_db_write_error = Error::new(ErrorKind::Other, "Couldn't write Transaction to DB");
                     Err(transaction_db_write_error)
                 }
-
             },
-
             Err(r) => {
                 println!("Failed adding new Transaction to Transaction_index: {}", parsed.dump());
                 let transaction_index_insert_error = Error::new(ErrorKind::Other, "Could not add transaction to transaction_index");
                 Err(transaction_index_insert_error)
             }
-
         };
         tindex_insert_result
     }
@@ -437,9 +435,7 @@ impl StateToJson for State {
             let state_sections: Vec<&str> = sub_state.split(":").collect::<Vec<_>>();
             let first_section: String = String::from(state_sections[0]);
             let second_section: String = String::from(state_sections[1]);
-            let state_insert_result: Result<String, Error> = match state_object
-                                                                   .insert( &( format!("{}", first_section).to_string() ),
-                                                                   format!("{}", second_section).as_str() ) {
+            let state_insert_result: Result<String, Error> = match state_object.insert( &( format!("{}", first_section).to_string() ), format!("{}", second_section).as_str() ) {
                   Ok(_) => {
                       Ok(String::from(""))
                   },
@@ -447,7 +443,6 @@ impl StateToJson for State {
                       Ok(String::from(""))
                   },
             };
-
         }
         state_object
     }
@@ -464,6 +459,7 @@ impl JsonToState for State {
         for (address, state) in states_iter {
             state_vec.push(format!("{}:{}", address.to_string(), state.to_string()));
         }
+        //TODO: change from a single string to a pair
         State{
             tree: state_vec
         }
@@ -486,6 +482,7 @@ impl CreateStateDB for State {
     fn create_state_db() -> () {
         let new_state_index = object!{};
         let index_to_write: String = json::stringify(new_state_index);
+        // TODO: SPECIFY WHICH STATE INDEX TO WRITE
         match DB::write_state(index_to_write) {
             Ok(_) => {
                 println!("Successfully wrote/created state DB");
@@ -507,6 +504,7 @@ impl WriteState for State {
     fn write(state: State) -> Result<State, String> {
         let new_state_index: JsonValue = State::to_json(state.clone());
         let index_to_write: String = json::stringify(new_state_index);
+        // TODO: SPECIFY WHICH STATE INDEX TO WRITE
         match DB::write_state(index_to_write) {
             Ok(_) => {
                 println!("Successfully wrote/created state DB");
@@ -526,10 +524,13 @@ trait ReadState {
 
 impl ReadState for State{
     fn read() -> Option<State>{
+        //TODO: read json string for state
         let current_state_string: Option<String> = DB::read_state();
         match current_state_string {
             Some(state) => {
+                //TODO: parse as JSONValue
                 let parsed = json::parse( &format!(r#"{}"#, state) ).unwrap();
+                //TODO: STATE::from_json
                 let state_from_json: State = State::to_state(parsed);
                 Some(state_from_json)
             },
@@ -548,16 +549,16 @@ pub trait CreateNewOuputTransaction {
 }
 
 impl CreateNewOuputTransaction for Transaction {
+    //TODO: convert to return an Option instead of only Transaction
     fn new_output(sender: String, data: String) -> Option<Transaction> {
         let latest_transaction_id: Option<i32> = DB::get_latest_transaction_id();
+        //TODO: condition on successful latest_transaction_id
         let new_transaction_id: i32 = latest_transaction_id.unwrap() + 1;
         let new_timestamp: Timestamp = Timestamp::new().unwrap();
         let b64_encoded_data: Result<String,String> = Encoder::encode_base64(data);
         match b64_encoded_data {
             Ok(data) => {
-                let new_transaction_hash: String = Self::hash_transaction(new_transaction_id.clone(),
-                                                                          new_timestamp.clone(),
-                                                                          data.clone());
+                let new_transaction_hash: String = Self::hash_transaction(new_transaction_id.clone(), new_timestamp.clone(), data.clone());
                 let new_tx = Transaction {
                     transaction_id: new_transaction_id,
                     transaction_timestamp: new_timestamp,
@@ -582,8 +583,6 @@ impl CreateNewOuputTransaction for Transaction {
                 None
             }
         }
-
-
     }
 }
 
@@ -606,6 +605,7 @@ pub trait ExecuteTransactions {
 */
 impl ExecuteTransactions for Transaction {
     fn execute_block_transactions(mut transactions: Vec<Transaction>) -> () {
+        //TODO: READ CURRENT STATE
         let current_state: Option<State> = State::read();
         match current_state {
             Some(state) => {
@@ -617,6 +617,7 @@ impl ExecuteTransactions for Transaction {
                     println!("execute_block_transactions(),  AFTER json_state_buffer OVERWRITE: {}", json_state_buffer.clone() );
                 });
                 let state_to_write: String = json::stringify( json_state_buffer.clone() );
+                // TODO: SPECIFY WHICH STATE INDEX TO WRITE
                 match DB::write_state(state_to_write) {
                     Ok(_) => {
                         println!("execute_block_transactions(), Successfully wrote/created state DB AFTER TX EXECUTION");
@@ -633,8 +634,6 @@ impl ExecuteTransactions for Transaction {
     }
 }
 
-
-
 /*
 @name Executable
 @desc trait for Executable behavior on transactions
@@ -648,23 +647,19 @@ impl Executable for Transaction {
         format!("Executing Transaction {}", self.transaction_id);
         match &self.transaction_type {
             TransactionType::Output => {
+                // TODO MACRO USE!!!! CUSTOM_TRANSACTION_OUTPUT_LOGIC!()
                 println!("TX execute TX Output BEFORE: {} : ",  State::to_json( current_state_buffer.clone().unwrap() ) );
+
+                // TODO: create new address in state
                 let mut state_as_json: JsonValue = State::to_json(current_state_buffer.clone().unwrap());
-                match &state_as_json.insert( &( format!("{}", self.transaction_hash).to_string() ), format!("{}", self.transaction_data) ) {
-                     Ok(_) => {
-                         println!("TX execute TX Output AFTER: {} : ",  state_as_json.clone()  );
-                         state_as_json
-                     },
-                     Err(_) => {
-                         println!("TX execute ERROR: State::to_json is NOT okay: {} ", State::to_json( current_state_buffer.clone().unwrap() ) );
-                         State::to_json(current_state_buffer.clone().unwrap())
-                     }
-                }
+                Executor::execute_transaction_output_logic(state_as_json,
+                                                           self.transaction_hash.clone(),
+                                                           self.transaction_data.clone())
             },
             TransactionType::Input => {
+                // TODO MACRO USE!!!! CUSTOM_TRANSACTION_INPUT_LOGIC!()
                 println!("TX execute TX Input");
                 State::to_json(current_state_buffer.clone().unwrap())
-                //TODO: male tx
             },
             TransactionType::TxTypeError => {
                 println!("TX execute ERROR: TxTypeError");
@@ -673,7 +668,6 @@ impl Executable for Transaction {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -684,6 +678,7 @@ mod tests {
                 ExecuteTransactions,
                 State};
     use timestamp::{Timestamp, NewTimestamp};
+
     #[test]
     fn test_create_tx_output_execution() {
         let new_timestamp: Timestamp = Timestamp::new().unwrap();
