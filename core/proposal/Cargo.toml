@@ -9,5 +9,6 @@ db = { path = "../db" }
 block = { path = "../block" }
 timestamp = { path = "../timestamp" }
 hash = { path = "../hash" }
+executor = { path = "../executor" }
 rustc-serialize = "0.3"
 json = "*"

@@ -17,11 +17,12 @@ along with the AfricaOS Platform. If not, see <http://www.gnu.org/licenses/>.
 extern crate json;
 use json::{JsonValue};
 use std::io::{Error, ErrorKind};
-
 use db::{DB,
          DBWriteProposal,
          DBReadProposal,
-         FileDirectoryReader};
+         FileDirectoryReader,
+         DBReadProposalPeerStatus,
+         DBWriteProposalPeerStatus};
 
 use block::{Block,
             CreateNewBlock,
@@ -33,6 +34,7 @@ use block::{Block,
 
 use timestamp::{Timestamp, NewTimestamp, StringToTimestamp};
 use hash::{Hasher, CalculateSHA256Hash};
+use executor::{Executor, ExecuteMacro};
 
 /*
 @name Proposal
@@ -54,19 +56,19 @@ pub struct Proposal {
 */
 #[derive(Clone,Debug,PartialEq)]
 pub enum ProposalStatus {
-    Pending,
-    Created,
-    Accepted,
-    AcceptedBroadcasted,
-    AcceptedByNetwork,
-    Rejected,
-    RejectedBroadcasted,
-    RejectedByNetwork,
-    Committed,
-    NotValid,
-    NotValidIncorrectNextBlockIndex,
-    NotValidIncorrectProposalHash,
-    ProposalStatusError
+    Pending,    //for proposals just made
+    Created,    //for proposals made, and broadcasted to the network
+    Accepted,   //proposals accepted by peers
+    AcceptedBroadcasted,   //proposals accepted by a node, AND BROADCASTED
+    AcceptedByNetwork,   //proposal accepted by peers, AND BROADCASTED
+    Rejected,   //proposal rejected by peers
+    RejectedBroadcasted,   //proposal rejected by a node AND BROADCASTED
+    RejectedByNetwork,   //proposal rejected by peervalidate_proposals, AND BROADCASTED
+    Committed,   //proposal agreed upon by peers
+    NotValid,    //proposals that do not match any of the above enum values
+    NotValidIncorrectNextBlockIndex,    //proposals that do not have the correct next block index
+    NotValidIncorrectProposalHash,    //proposals that do not hash to be correct
+    ProposalStatusError   //DEFAULT ENUM ERROR
 }
 
 pub trait StatusToString {
@@ -102,7 +104,7 @@ pub trait StringToStatus {
 }
 
 /*
-@name status_from_string
+@name
 @desc
 */
 impl StringToStatus for Proposal {
@@ -168,7 +170,8 @@ impl JsonConverter for Proposal {
     }
 
     fn from_json(payload: JsonValue) -> Result<Proposal, String> {
-        println!("From JSON: {}", payload);
+        //TODO: return a Result<Proposal, Error>
+        println!("Proposal, JsonConverter, From JSON: {}", payload);
         let proposal_id_from_json_option: Option<i32> = payload["proposal_id"].as_i32();
         match proposal_id_from_json_option {
             Some(proposal_id_from_json) => {
@@ -203,10 +206,10 @@ impl JsonConverter for Proposal {
                 Err(String::from("Proposal, ERROR: from_json, proposal_id could not be parsed as i32!"))
             }
         }
-
     }
 
     fn from_json_string(json_string: String) -> Result<Proposal, String> {
+        // TODO: conditionally unwrap instead of just unwrapping
         let parsed = json::parse( &format!(r#"{}"#, json_string) ).unwrap();
         Self::from_json(parsed)
     }
@@ -228,9 +231,11 @@ pub trait CreateProposalIndex {
 */
 impl CreateProposalIndex for Proposal {
     fn create_proposal_index() -> (){
+
         let new_proposal_index = object!{
             "proposals" => object!{}
         };
+
         let index_to_write: String = json::stringify(new_proposal_index);
         match DB::write_proposal_index(index_to_write) {
             Ok(_) => {
@@ -272,20 +277,32 @@ impl UpdateProposalInDB for DB {
                                    peer: String) -> Result<String, String> {
 
         println!("Inside add_node_status_to_proposal_json");
-        let mut proposal_index_option: Option<JsonValue> = Self::get_proposal_index_as_json();
-        match proposal_index_option {
-            Some(mut proposal_index) => {
-                let all_proposals = &mut proposal_index["proposals"];
+
+        //TODO: get proposal peer statuses
+        let mut proposal_object_option: Option<JsonValue> = Proposal::read_proposal_file_by_id(proposal.proposal_id);
+
+        match proposal_object_option {
+            Some(mut proposal_loaded) => {
+                let proposal_root = &mut proposal_loaded;
+                //TODO: add peer name key to proposal
                 let stringed_status = Proposal::string_from_status(status);
-                all_proposals[proposal.proposal_id.to_string()][peer] = JsonValue::from(stringed_status);
-                let proposal_write_result: Result<String,String> = match Self::write_proposal_index(proposal_index.dump()) {
+
+                // TODO: dont alter proposal index, only alter proposal file object
+                //proposal_root[proposal.proposal_id.to_string()][peer] = JsonValue::from(stringed_status);
+                proposal_root[peer] = JsonValue::from(stringed_status);
+
+                // TODO: write proposal peer status
+                let proposal_write_result: Result<String,String> = match Self::write_proposal_to_sql(proposal.proposal_id, proposal_root.dump()) {
                     Ok(result) => {
                         Ok(result)
                     },
                     Err(err) => {
-                        Err( String::from("add_peer_status_to_proposal ERROR: Writing proposal index failed") )
+                        //let proposal_db_write_peer_status_error = Error::new(ErrorKind::Other, "Couldn't write Proposal peer status to DB");
+                        Err( String::from("add_peer_status_to_proposal ERROR: Writing proposal peer status failed") )
                     }
                 };
+
+
                 proposal_write_result
             },
             None => {
@@ -296,9 +313,11 @@ impl UpdateProposalInDB for DB {
 
     fn update_proposal(proposal: Proposal, status: &str) -> Result<String,String> {
         println!("Inside update proposal");
+        //TODO: get proposal index
         let mut proposal_index_option: Option<JsonValue> = Self::get_proposal_index_as_json();
         match proposal_index_option {
             Some(mut proposal_index) => {
+                //TODO: change the entry
                 let all_proposals = &proposal_index["proposals"];
                 let new_proposal_status: ProposalStatus = Proposal::status_from_string( status.clone() );
                 let altered_proposal_block: Result<Block, String> = Block::from_json(all_proposals[ proposal.proposal_id.to_string() ]["proposal_block"].clone());
@@ -314,20 +333,18 @@ impl UpdateProposalInDB for DB {
                         };
                         let parsed = json::parse( &format!(r#"{}"#, Proposal::to_json(altered_proposal.clone()) ) );
                         if parsed.is_ok() {
+                            //TODO: overwrite not whole proposal, but only status, so we conserve the node/peer statuses
                             proposal_index
                             ["proposals"]
                             [proposal.proposal_id.to_string()]
                             ["proposal_status"] = JsonValue::from(status);
                             let proposal_write_result: Result<String,String> = match Self::write_proposal_index(proposal_index.dump()) {
                                 Ok(result) => {
-                                    match Self::write_proposal(altered_proposal.clone(), new_proposal_status.clone()){
-                                        Ok(result) => {
-                                            Ok( String::from("update_proposal SUCCESS: Successful write of proposal") )
-                                        },
-                                        Err(_) => {
-                                            Err( String::from("update_proposal ERROR: Writing to disk failed") )
-                                        }
-                                    }
+                                    /*
+                                    //TODO: overwrites actual proposal file...
+                                    */
+                                    //TODO: TEST TO SEE IF STOP OVERWRITING PROPOSAL File
+                                    Ok( String::from("update_proposal SUCCESS: Successful write of proposal") )
                                 },
                                 Err(err) => {
                                     Err( String::from("update_proposal ERROR: Writing proposal index failed") )
@@ -357,6 +374,7 @@ impl UpdateProposalInDB for DB {
 */
 pub trait ReadProposalFromDB {
     fn get_proposal_index_as_json() -> Option<JsonValue>;
+    fn get_proposal_peer_status_as_json(proposal_id: i32) -> Option<JsonValue>;
     fn get_latest_proposal() -> Option<Proposal>;
     fn get_all_proposals() -> Option<Vec<Proposal>>;
     fn get_last_n_proposals() -> Option<Vec<Proposal>>;
@@ -367,6 +385,7 @@ pub trait ReadProposalFromDB {
 @desc
 */
 impl ReadProposalFromDB for DB {
+
     /*
     @name get_proposal_index_as_json
     @desc return the proposal index as a json object
@@ -374,16 +393,46 @@ impl ReadProposalFromDB for DB {
     fn get_proposal_index_as_json() -> Option<JsonValue> {
         let proposal_index: String = match DB::read_proposal_index() {
             Some(i) => {
+                //TODO: parse/verify proposal index
                 i
             },
-            None => String::from("NO INDEX")
+            None => String::from("get_proposal_index_as_json, NO INDEX")
         };
         println!("Proposal index: {}", proposal_index);
+        //TODO: convert DB json string to json
         let parsed_result: Result<JsonValue, json::Error> = json::parse( &format!(r#"{}"#, proposal_index) );
         match parsed_result {
             Ok(parsed) => {
                 println!("proposal index parsed: {}", parsed["proposals"]);
                 println!("PI parse example 0 {}", parsed["proposals"]["0"]);
+                Some(parsed)
+            },
+            Err(_) => {
+                None
+            }
+        }
+    }
+
+    /*
+    @name get_proposal_peer_status_as_json
+    @desc return the proposal index as a json object
+    */
+    fn get_proposal_peer_status_as_json(proposal_id: i32) -> Option<JsonValue> {
+        //let proposal_index: String = match DB::read_proposal_index() {
+        let proposal_index: String = match DB::read_proposal_peer_status(proposal_id) {
+            Some(i) => {
+                //TODO: parse/verify proposal index
+                i
+            },
+            None => String::from("NO INDEX")
+        };
+        println!("Proposal index: {}", proposal_index);
+        //TODO: convert DB json string to json
+        let parsed_result: Result<JsonValue, json::Error> = json::parse( &format!(r#"{}"#, proposal_index) );
+        match parsed_result {
+            Ok(parsed) => {
+                println!("get_proposal_peer_status_as_json, proposal index parsed: {}", parsed["proposals"]);
+                println!("get_proposal_peer_status_as_json, PI parse example 0 {}", parsed["proposals"]["0"]);
                 Some(parsed)
             },
             Err(_) => {
@@ -413,6 +462,7 @@ impl ReadProposalFromDB for DB {
     @desc get all proposals from the proposals directory
     */
     fn get_all_proposals() -> Option<Vec<Proposal>> {
+        //TODO: read proposal index
         let parsed_option: Option<JsonValue> = Self::get_proposal_index_as_json();
         match parsed_option {
             Some(parsed) => {
@@ -450,7 +500,7 @@ impl ReadProposalFromDB for DB {
                     Some(next_proposal_id) => {
                         let mut all_proposals_vector: Vec<Proposal> = Vec::new();
                         let mut highest_proposal_to_fetch: i32 = ( format!("{}", proposal_index["proposals"].clone().len() ).parse::<i32>().unwrap() );//next_proposal_id + 5;
-                        let mut furthest_proposal_to_fetch: i32 = highest_proposal_to_fetch - 1;//next_proposal_id;
+                        let mut furthest_proposal_to_fetch: i32 = highest_proposal_to_fetch - 1;// was 5 //next_proposal_id;
                         if furthest_proposal_to_fetch < 0 {
                             furthest_proposal_to_fetch = 0;
                         } else {}
@@ -498,36 +548,37 @@ impl WriteProposalToDB for DB {
     */
     fn write_proposal(mut proposal: Proposal, new_status: ProposalStatus) -> Result<String,std::io::Error> {
         println!("inside write_proposal new_status: ProposalStatusn Proposal, DB trait");
+        //TODO: Read proposal index JSON
+        //TODO: pass Node Peer name
         let parsed_option: Option<JsonValue> = Self::get_proposal_index_as_json();
         match parsed_option {
             Some(mut parsed) => {
                 proposal.proposal_status = new_status.clone();
+                //TODO: convert from Proposal to JSON
                 let proposal_string: String = Proposal::to_json(proposal.clone());
                 if parsed.has_key( &(format!("{}", proposal.proposal_id).to_string()) ) {
+                    //the proposal index has the key already, so update the status ONLY
+                    //THIS PRESERVES THE DATA IN IT ALREADY!
                     let stringed_status = Proposal::string_from_status(new_status);
+                    //overwrite the proposal status ONLY
                     parsed["proposals"]
                           [&(format!("{}", proposal.proposal_id).to_string())]
                           ["proposal_status"] = JsonValue::from(stringed_status);
                     println!("write_proposal, UPDATE Proposal JSON: {}", parsed.dump());
+                    //write index first!
                     let db_index_write_result: Result<String, Error> = Self::write_proposal_index(parsed.dump());
                     match db_index_write_result {
                         Ok(result) => {
                             let proposal_string: String = Proposal::to_json(proposal.clone());
-                            let db_write_result: Result<String, std::io::Error> = Self::write_proposal_to_sql(proposal.proposal_id, proposal_string.clone());
-                            match db_write_result {
-                                Ok(r) => {
-                                    Ok(r)
-                                },
-                                Err(err) => {
-                                    Err(err)
-                                }
-                            }
+                            //TODO: dont overwrite peer status proposal files
+                            Ok(String::from("successul, write_proposal, db_index_write_result"))
                         },
                         Err(err) => {
                             Err(err)
                         }
                     }
                 } else {
+                    //TODO: alter proposal index json object
                     let new_proposal_entry = object!{
                         "proposal_id" => proposal.proposal_id,
                         "proposal_status" => Proposal::string_from_status(new_status),
@@ -543,8 +594,14 @@ impl WriteProposalToDB for DB {
                             println!("New Proposal JSON: {}", parsed.dump());
                             let db_index_write_result = Self::write_proposal_index(parsed.dump());
                             if db_index_write_result.is_ok() {
+                                //TODO: commit proposal index to DB
+                                //TODO: commit proposal to DB
+
+                                //TODO: dont overwrite peer status proposal files
+                                //Ok(String::from("successul, write_proposal, db_index_write_result"))
                                 let db_write_result: Result<String, std::io::Error> = Self::write_proposal_to_sql(proposal.proposal_id, proposal_string.clone());
                                 db_write_result
+
                             } else {
                                 let proposal_db_write_error = Error::new(ErrorKind::Other, "Couldn't write Proposal to DB");
                                 Err(proposal_db_write_error)
@@ -555,6 +612,7 @@ impl WriteProposalToDB for DB {
                             let proposal_index_insert_error = Error::new(ErrorKind::Other, "Could not add proposal to proposal_index");
                             Err(proposal_index_insert_error)
                         }
+
                     };
                     pindex_insert_result
                 }
@@ -581,7 +639,8 @@ trait WriteNewProposalToDB {
 */
 impl WriteNewProposalToDB for Proposal {
     fn write_new_proposal(proposal: Proposal) -> Result<String,std::io::Error> {
-        DB::write_proposal(proposal, ProposalStatus::Pending)
+        //TODO: Pass "Node Name" to DB functions so it knows where to write?
+        DB::write_proposal(proposal, ProposalStatus::Pending) //write proposal
     }
 }
 
@@ -599,6 +658,7 @@ pub trait StoreProposal {
 */
 impl StoreProposal for Proposal {
     fn store_proposal(proposal: Proposal, proposal_status: ProposalStatus) -> Result<String,std::io::Error> {
+        //TODO: "Node Name" to DB functions so it knows where to write?
         DB::write_proposal(proposal, proposal_status)
     }
 }
@@ -611,6 +671,7 @@ pub trait GetProposals {
     fn get_all_proposals() -> Option<Vec<Proposal>>;
     fn get_last_n_proposals() -> Option<Vec<Proposal>>;
     fn get_latest_proposal() -> Option<Proposal>;
+    fn read_proposal_file_by_id(proposal_id: i32) -> Option<JsonValue>;
 }
 
 impl GetProposals for Proposal {
@@ -626,6 +687,27 @@ impl GetProposals for Proposal {
         DB::get_latest_proposal()
     }
 
+    fn read_proposal_file_by_id(proposal_id: i32) -> Option<JsonValue>{
+        let proposal_index: String = match DB::read_proposal_file_by_id(proposal_id) {
+            Some(i) => {
+                //TODO: parse/verify proposal index
+                i
+            },
+            None => String::from("proposal, read_proposal_file_by_index, NO PROPOSAL FOUND")
+        };
+        println!("proposal, read_proposal_file_by_index, Proposal: {}", proposal_index);
+        //TODO: convert DB json string to json
+        let parsed_result: Result<JsonValue, json::Error> = json::parse( &format!(r#"{}"#, proposal_index) );
+        match parsed_result {
+            Ok(parsed) => {
+                println!("proposal, read_proposal_file_by_index, proposal parsed: {}", parsed);
+                Some(parsed)
+            },
+            Err(_) => {
+                None
+            }
+        }
+    }
 }
 
 /*
@@ -638,7 +720,6 @@ pub trait UpdateProposal {
         @desc add a key to the proposal DB
     */
     fn add_peer_status_to_proposal(proposal: Proposal, status: ProposalStatus, peer: String) -> Result<String, String>;
-
     fn update_proposal(proposal: Proposal, status: &str) -> Result<String,String> ;
 }
 
@@ -690,6 +771,7 @@ impl NewProposal for Proposal {
     */
     fn create(request_origin: String) -> Option<Proposal> {
         println!("Creating New Proposal...");
+        //TODO: determine proposal ID
         let new_proposal_id:i32 = match Self::get_next_proposal_id(){
             Some(pid) => pid,
             None => -1
@@ -702,9 +784,11 @@ impl NewProposal for Proposal {
             Some(ts) => {
                 let new_proposal_sender: String = request_origin;
                 let new_proposal_hash: String = Self::hash_proposal(calculated_proposal_id.clone(), new_proposal_sender.clone(), ts.clone());
+                //TODO: CREATE NEW BLOCK
                 let new_proposal_block: Result<Block, String> = Block::new(new_proposal_hash.clone());
                 match new_proposal_block {
                     Ok(block) => {
+                        //Increment the local proposal id
                         let new_proposal: Proposal = Proposal {
                             proposal_id: calculated_proposal_id,
                             proposal_status: new_proposal_status,
@@ -713,6 +797,7 @@ impl NewProposal for Proposal {
                             proposal_sender: new_proposal_sender,
                             proposal_block: block
                         };
+                        //TODO: create proposal attempt in DB
                         Self::write_new_proposal(new_proposal.clone()).unwrap();
                         Some(new_proposal)
                     },
@@ -766,16 +851,22 @@ impl ProposalIDGenerator for Proposal {
     @desc generate the next proposal_id from all proposals on disk
     */
     fn get_next_proposal_id() -> Option<i32> {
+        //read all directories
         let files:Vec<String> = DB::read_proposals_directory();
         let mut iter = (&files).into_iter();
         let mut highest_proposal_index: i32 = -1;
+        //iterate over all proposal files
         while let Some(v) = iter.next(){
             println!("Filename Iter: {}", v);
+            //parse file name for proposal id
             let filename_split_vector = v.split("/").collect::<Vec<_>>();
             let last_split_section: &str = filename_split_vector[filename_split_vector.len() - 1];
             let parsed_proposal_id: Option<i32> = Self::parse_filename_for_proposal_id(last_split_section);
+            //TODO: parse to a proposal type, and check status
+            // should not count a none commited block in the highest_block_id calculation
             match parsed_proposal_id {
                 Some(pid) => {
+                    //Could keep this in memory globally?
                     if pid > highest_proposal_index {
                         highest_proposal_index = pid;
                     }
@@ -809,12 +900,15 @@ impl ProposalValidator for Proposal {
 
     fn is_accepted_broadcasted_already(submitted_proposal: Proposal) -> bool {
         let all_proposals: Option<Vec<Proposal>> = Proposal::get_last_n_proposals();
+        //TODO: Breakout into Proposal::find_proposal
         let already_commited: Option<Proposal> = match all_proposals {
             Some(proposals) => {
                 let mut commited_proposal: Option<Proposal> = None;
                 for proposal in proposals {
+                    // here we are saying, if we already have proposal, that matches the block id of the submitted proposal
                     if proposal.clone().proposal_block.block_id == submitted_proposal.proposal_block.block_id {
                         println!("is_commited_already, proposal.block_id matches submitted block_id");
+                        //if we have the proposal, check its status, if we already AcceptedBroadcasted, AcceptedByNetwork it, return it
                         if
                            proposal.clone().proposal_status == ProposalStatus::AcceptedBroadcasted
                            ||
@@ -826,6 +920,7 @@ impl ProposalValidator for Proposal {
                            {
                             println!("is_commited_already, proposal status IS INDEED AcceptedBroadcasted, DO NOT VALIDATE ANOTHER VERSION");
                             commited_proposal = Some(proposal);
+                            // TODO: can safely break for proposal in proposals iteration
                         } else {
                             println!("is_commited_already, ERROR proposal STATUS IS NOT COMMITED, DON'T RESPOND WITH IT");
                         }
@@ -851,6 +946,7 @@ impl ProposalValidator for Proposal {
     // this should only be invoked from one node for a given block
     fn validate_proposal(submitted_proposal: Proposal) -> Result<ProposalValidationResult, std::io::Error> {
         println!("validate_proposal(), Submitted Proposal: {}", submitted_proposal.proposal_id);
+        //security - if i already agreed and broadcasted, I should not validate another proposal
         if Self::is_accepted_broadcasted_already(submitted_proposal.clone()) {
             let is_commited_already_error = Error::new(ErrorKind::Other, "validate_proposal() [ERROR] WE COMMITED THE BLOCK ALREADY, PROBABLY AWAITING RESOLUTION");
             return Err(is_commited_already_error)
@@ -863,10 +959,15 @@ impl ProposalValidator for Proposal {
                     return Err(get_proposal_index_as_json_error)
                 }
             };
+            //TODO: check to see if submitted_proposal.proposal_id is higher than my highest proposal_id, like sequence numbers
+            //TODO: Bob checks if he already has a Proposal with that proposal_id (proposal_id = 1)
+            //TODO: if bob doesn't have proposal_id = 1, bob verifies the proposal using the following criteria
             let all_proposals = &proposal_index_parsed["proposals"];
             let proposal_id_string: String = format!("{}", submitted_proposal.proposal_id);
             let proposal_id_check = &all_proposals[proposal_id_string.clone()];
             if !proposal_id_check.has_key( proposal_id_string.clone().as_str() ) {
+                    //TODO: if bob has proposal_id = 1, he checks the status of it
+                    //TODO: What is the current block_id bob has?
                     let current_block_id: Option<i64> = Block::get_latest_block_id();
                     let current_block_id_result: i64 = match current_block_id {
                         Some(block_id) => {
@@ -874,33 +975,43 @@ impl ProposalValidator for Proposal {
                             block_id
                         },
                         None => {
+                            //NO PREVIOUS BLOCK
                             -1
                         }
                     };
+                    //TODO: a valid proposal will ONLY be the current block_id + 1
                     if ( (current_block_id_result + 1) == submitted_proposal.proposal_block.block_id ) {
 
                     } else {
                         return Ok(ProposalValidationResult::NotValidIncorrectNextBlockIndex)
                     }
 
+                    //TODO: breakout into modular, verify_proposal_hash
+                    //TODO: calculate the hash of the proposal (see below)
                     let string_to_hash: String = String::from( format!("{}{}{}", submitted_proposal.proposal_id,
                                                                                  submitted_proposal.proposal_sender,
                                                                                  submitted_proposal.proposal_time.timestamp).as_str() ) ;
 
                     let expected_hash: String = submitted_proposal.proposal_hash;
                     let submitted_proposal_hash: String = Hasher::calculate_sha256( string_to_hash );
-
+                    //TODO: validate the proposal_hash provided by alice against the proposal_hash bob just calculated
                     match submitted_proposal_hash {
                         _ if submitted_proposal_hash == expected_hash => {
                             println!("HASH SUCCESS: proposal hash IS CORRECT: {}{}", expected_hash, submitted_proposal_hash);
                         },
                         _ => {
+                            //TODO: if the hashes are different, bob rejects the proposal, and sets the proposal to NotValid in the proposal index
                             println!("ERROR: proposal hash not valid: {}{}", expected_hash, submitted_proposal_hash);
                             return Ok(ProposalValidationResult::NotValidIncorrectProposalHash)
                         }
                     }
+                    //TODO: What is the current block_hash of our highest block?
+                    //TODO: If the block_hash of bob's highest block is NOT equal to the block_parent_hash of the submitted proposal's proposal_block, bob rejects the block, and sets the proposal to NotValid in the proposal index
+                    //TODO: if all of the above does not reject the proposal, bob accepts alice's submitted proposal, responds to alice with "acceptance", and updates the proposal_index to accepted for the proposal_id
             } else {
-
+                    //TODO: if the proposal_status is accepted, or rejected, and the submitter is NOT bob, do nothing because bob already added it to the proposal index
+                    // proposal_id_check.has_key IS FALSE
+                    // return Ok(ProposalValidationResult::NotValid)
             }
 
             let proposal_validation_error = Error::new(ErrorKind::Other, "Couldn't validate proposal");
@@ -920,6 +1031,8 @@ pub trait CompareWithoutStatus {
 
 impl CompareWithoutStatus for Proposal {
     fn compare_without_status(proposal_left: Proposal, proposal_right: Proposal) -> bool {
+
+        //test proposal_id
         match proposal_left.proposal_id == proposal_right.proposal_id {
             true => {
 
@@ -929,6 +1042,7 @@ impl CompareWithoutStatus for Proposal {
             }
         }
 
+        //test proposal_hash
         match proposal_left.proposal_hash == proposal_right.proposal_hash {
             true => {
 
@@ -938,6 +1052,7 @@ impl CompareWithoutStatus for Proposal {
             }
         }
 
+        //test proposal_time
         match proposal_left.proposal_time == proposal_right.proposal_time {
             true => {
 
@@ -947,6 +1062,7 @@ impl CompareWithoutStatus for Proposal {
             }
         }
 
+        //test proposal_sender
         match proposal_left.proposal_sender == proposal_right.proposal_sender {
             true => {
 
@@ -956,6 +1072,7 @@ impl CompareWithoutStatus for Proposal {
             }
         }
 
+        //test proposal_block
         match proposal_left.proposal_block == proposal_right.proposal_block {
             true => {
 
@@ -966,7 +1083,6 @@ impl CompareWithoutStatus for Proposal {
         }
 
         true
-
     }
 }
 
@@ -980,12 +1096,12 @@ pub trait ValidateProposalBlock {
 
 impl ValidateProposalBlock for Proposal {
     fn validate_proposal_block(&mut self) -> Result<(), String> {
+        //////////// TODO: check if we already commited a proposal
         println!("validate_proposal_block: check if we commited already");
+        //TODO SECURITY:
         Block::commit_if_valid(self.clone().proposal_block)
     }
 }
-
-
 
 /*
     @desc upon a resolution proposal received, provided it is accepted-broadcast,
@@ -1002,8 +1118,11 @@ pub trait ProposalResolutionAccepted {
 impl ProposalResolutionAccepted for Proposal {
     fn validate_proposal_resolution(local_proposal: Proposal, received_proposal: Proposal) -> Result<(), ()> {
         match received_proposal.proposal_status {
+            //was it accepted by the network, according to the submitter, not us
             ProposalStatus::AcceptedByNetwork => {
                 println!("invoke_action(), proposal_resolution - received_proposal STATUS IS AcceptedByNetwork");
+                //TODO: WE ACCEPTED IT, BROADCASTED IT AND WE JUST RECEIVED A RESOLUTION
+                //Proposal::update_proposal(found_proposal.clone().unwrap(),"accepted_by_network");
                 if received_proposal
                    .clone()
                    .validate_proposal_block()
@@ -1015,15 +1134,15 @@ impl ProposalResolutionAccepted for Proposal {
                        Err(())
                 }
             },
-
             ProposalStatus::RejectedByNetwork => {
                 println!("invoke_action(), proposal_resolution - decoded_proposal STATUS IS RejectedByNetwork");
+                //TODO: WE CREATED IT AND WE JUST RECEIVED A REJECTION
+                //Proposal::update_proposal(found_proposal.clone().unwrap(),"rejected_by_network");
                 Err(())
             },
-
-
             ProposalStatus::Committed => {
                 println!("invoke_action(), proposal_resolution - received_proposal STATUS IS Commited");
+                //TODO: WE ACCEPTED IT, BROADCASTED IT AND WE JUST RECEIVED A RESOLUTION
                 if received_proposal
                    .clone()
                    .validate_proposal_block()
@@ -1053,11 +1172,11 @@ pub trait CalculateProposalCreatorID {
 
 impl CalculateProposalCreatorID for Proposal {
     fn calculate_next_proposal_creator_id(peer_length: usize, latest_block_id: i64) -> i64 {
+        //TODO: invoke PCE macro. macro use
         println!("calculate_next_proposal_creator_id: peer_length: {} latest_block_id: {}",
                  peer_length,
                  latest_block_id);
-        //todo: add one to include myself -- ASSUMING we are connected to everybody
-        return ( (latest_block_id + 1) % ( (peer_length + 1) as i64) ) + 1;
+        Executor::execute_proposal_creator_election(peer_length, latest_block_id)
     }
 }
 
@@ -1069,7 +1188,6 @@ mod tests {
                 ProposalValidator,
                 ProposalValidationResult,
                 CalculateProposalCreatorID};
-
     use block::{Block, CreateNewBlock};
     use timestamp::{Timestamp, NewTimestamp};
 
@@ -1114,5 +1232,6 @@ mod tests {
         assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers,
                                                                 next_block_id), 3);
     }
+
 
 }

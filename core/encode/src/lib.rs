@@ -18,14 +18,10 @@ extern crate base64;
 use std::str;
 use base64::{encode, decode};
 
-pub struct Encoder {
-
-}
-
+pub struct Encoder {}
 pub trait RawBytesEncode {
     fn encode_rawbytes(string_to_encode: String) -> Vec<u8>;
 }
-
 
 impl RawBytesEncode for Encoder {
     fn encode_rawbytes(mut string_to_encode: String) -> Vec<u8> {
@@ -37,10 +33,9 @@ pub trait RawBytesDecode {
     fn decode_rawbytes(bytes: Vec<u8>) -> Result<String, String>;
 }
 
-
 impl RawBytesDecode for Encoder {
     fn decode_rawbytes(bytes: Vec<u8>) -> Result<String, String> {
-        let converted_to_string: Result<String,std::string::FromUtf8Error> = String::from_utf8(bytes);
+        let converted_to_string: Result<String, std::string::FromUtf8Error> = String::from_utf8(bytes);
         match converted_to_string {
             Ok(result) => {
                 Ok(result)
@@ -54,7 +49,7 @@ impl RawBytesDecode for Encoder {
 
 pub trait Base64Encode {
     /*
-    @name encode
+    @name encode_base64
     @desc encode a string to its base64 representation
     */
     fn encode_base64(bytes_as_string: String) -> Result<String,String>;
@@ -70,14 +65,13 @@ impl Base64Encode for Encoder {
 
 pub trait Base64Decode {
     /*
-    @name decode
+    @name decode_base64
     @desc convert a base64 encoded string back to its origin
     */
     fn decode_base64(encoded: String) -> Result<String, String>;
 }
 
 impl Base64Decode for Encoder {
-    //fn decode_base64(encoded: String) -> Result<String, std::str::Utf8Error> {
     fn decode_base64(encoded: String) -> Result<String, String> {
         println!("decode_base64(), base64 encoded: {}", encoded);
         let decoded_result: Result<Vec<u8>, base64::DecodeError> = decode(&encoded);
@@ -87,6 +81,7 @@ impl Base64Decode for Encoder {
                 match decode_from_utf8 {
                     Ok(result) => {
                         let decoded_result_w_quotes: String = String::from(result);
+                        //TODO: replace only the first and last quotes, not all, since its A json object
                         let decoded_result_wo_quotes: &str = decoded_result_w_quotes
                                                              .as_str()
                                                              .trim_matches('\"');
@@ -103,7 +98,6 @@ impl Base64Decode for Encoder {
                 Err(String::from("Base64encode, encode(), decoded_result is ERR"))
             }
         }
-
     }
 }
 

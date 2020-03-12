@@ -1,9 +1,9 @@
 [package]
-name = "db"
+name = "executor"
 version = "0.1.0"
 authors = ["Kunta Labs"]
 edition = "2018"
 
 [dependencies]
-lazy_static = "1.4.0"
-lock = { path = "../lock" }
+json = "*"
+macros = { path = "../macros" }

@@ -64,7 +64,7 @@ fn main() {
 
     loop {
         node.transition();
-        thread::sleep_ms(1000); //delay between every global state transition
+        thread::sleep_ms(5000); //delay between every global state transition
     }
 
 }
@@ -79,13 +79,13 @@ mod tests {
     use timestamp::{Timestamp, NewTimestamp};
     use network::{Server, PayloadParser, API};
 
-
     #[test]
     fn test_validate_proposal_isok() {
         let successful_msg: &str = "Successful Proposal Validation";
         let successful_result_stub: Result<String, std::io::Error> = Ok(String::from(successful_msg));
         let test_timestamp: Option<Timestamp> = Timestamp::new();
         let test_block: Result<Block, String> = Block::new();
+
         println!("test_timestamp: {}", test_timestamp.clone().unwrap().timestamp);
 
         let test_proposal: Proposal = Proposal {
@@ -100,7 +100,6 @@ mod tests {
         assert!(proposal_validated.is_ok());
     }
 
-
     #[test]
     fn test_validate_proposal() {
         let successful_msg: &str = "Successful Proposal Validation";
@@ -108,7 +107,6 @@ mod tests {
         let test_timestamp: Option<Timestamp> = Timestamp::new();
         let test_block: Result<Block, String> = Block::new();
         println!("test_timestamp: {}", test_timestamp.clone().unwrap().timestamp);
-
         let test_proposal: Proposal = Proposal {
             proposal_id: 0,
             proposal_status: ProposalStatus::Created,
@@ -117,7 +115,6 @@ mod tests {
             proposal_sender: String::from("test proposal sender"),
             proposal_block: test_block.unwrap()
         };
-
         let proposal_validated: Result<ProposalValidationResult, std::io::Error> = Proposal::validate_proposal(test_proposal);
         assert_eq!(ProposalValidationResult::Valid, proposal_validated.unwrap());
     }
