@@ -1,11 +1,11 @@
 # Africa Operating System (AfricaOS)
 A simple, customizable, proposal-based, replicated state machine (RSM), inspired by pBFT (Practical Byzantine Fault Tolerance) written in pure Rust
 
-# Statuses
+### Statuses
 
 | Status Type | Status |
 | --- | --- |
-| `Build Status` | [![Build Status](https://travis-ci.org/kunta-labs/AfricaOS.svg?branch=master)](https://travis-ci.org/kunta-labs/AfricaOS) |
+| `Travis Build` | [![Build Status](https://travis-ci.org/kunta-labs/AfricaOS.svg?branch=master)](https://travis-ci.org/kunta-labs/AfricaOS) |
 | `Issues` | [![Issues](https://img.shields.io/github/issues/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS/issues) |
 | `Last Commit` | [![Last commit](https://img.shields.io/github/last-commit/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS/commits/master) |
 | `Docker Stars` | ![Docker Stars](https://img.shields.io/docker/stars/kuntalabs/africaos.svg) |
