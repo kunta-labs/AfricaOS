@@ -3,7 +3,8 @@ A simple, customizable, proposal-based, replicated state machine (RSM), inspired
 
 | Status Type | Status |
 | --- | --- |
-| `Travis Build` | [![Build Status](https://travis-ci.org/kunta-labs/AfricaOS.svg?branch=master)](https://travis-ci.org/kunta-labs/AfricaOS) |
+| `Master Build` | [![Build Status](https://travis-ci.org/kunta-labs/AfricaOS.svg?branch=master)](https://travis-ci.org/kunta-labs/AfricaOS) |
+| `Development Build` | [![Build Status](https://travis-ci.org/kunta-labs/AfricaOS.svg?branch=development)](https://travis-ci.org/kunta-labs/AfricaOS) |
 | `Issues` | [![Issues](https://img.shields.io/github/issues/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS/issues) |
 | `Last Commit` | [![Last commit](https://img.shields.io/github/last-commit/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS/commits/master) |
 | `Docker Stars` | ![Docker Stars](https://img.shields.io/docker/stars/kuntalabs/africaos.svg) |
@@ -15,7 +16,7 @@ A simple, customizable, proposal-based, replicated state machine (RSM), inspired
 | `Lastest Release` | [![Latest release](https://img.shields.io/github/v/release/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS/releases) |
 | `Top Language` | [![Top language](https://img.shields.io/github/languages/top/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS) |
 | `Code Size` | [![Code size in bytes](https://img.shields.io/github/languages/code-size/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS) |
-| `Discord` | ![Discord](https://img.shields.io/discord/430502296699404308) |
+| `Chat` | ![Discord](https://img.shields.io/discord/430502296699404308) |
 
 ## Get the updated code, and documentation on XS code
 All code updates, and documentation are pushed to our sponsorship repository, and eventually pushed into this free repository. The sponsorship repository comes with extra features, detailed/updated documentation, and priority bug fixes. Subscribe to the sponsorship repository on XS Code:

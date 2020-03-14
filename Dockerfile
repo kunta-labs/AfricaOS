@@ -17,13 +17,14 @@ RUN rustup target add x86_64-unknown-linux-musl
 RUN cargo build --release
 
 # Copy the source and build the application.
-COPY ./src ./src
+COPY ./core/src ./src
+
+####
 
 ####
 #RUN apt-get install pkg-config libx11-dev libxmu-dev
 
 RUN cargo install --target x86_64-unknown-linux-musl --path .
-
 
 ################second stage
 FROM scratch
