@@ -7,7 +7,7 @@ ARG nodeType
 
 RUN mkdir /environment/
 
-COPY . /environment/
+COPY ./core /environment/
 
 WORKDIR /environment/
 
@@ -18,6 +18,8 @@ RUN cargo build --release
 
 # Copy the source and build the application.
 COPY ./core/src ./src
+
+####
 
 ####
 #RUN apt-get install pkg-config libx11-dev libxmu-dev
