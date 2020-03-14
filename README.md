@@ -79,7 +79,7 @@ to run the 3 containers, and set up the 3-node network, run
 make rac # stands for "run all containers"
 ```
 
-# To Contribute
+## To Contribute
 TODO:
 
 **under active development**
