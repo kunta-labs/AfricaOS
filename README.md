@@ -67,7 +67,7 @@ To build the core docker container, run
 ```
 make dbm # stands for "docker build main"
 ```
-### Pulling container
+### Pulling AOS core container
 to pull a minimal docker image of AfricaOS, run
 ```
 docker pull kuntalabs/africaos:latest
