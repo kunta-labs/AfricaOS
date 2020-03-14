@@ -2,6 +2,7 @@
 #FROM rust:1.36.0 AS build
 FROM clux/muslrust AS build
 
+# TODO: map nodetype
 ARG nodeType
 
 RUN mkdir /environment/
@@ -12,6 +13,7 @@ WORKDIR /environment/
 
 RUN rustup target add x86_64-unknown-linux-musl
 
+# just to show it builds, may not need
 RUN cargo build --release
 
 # Copy the source and build the application.
@@ -22,17 +24,32 @@ COPY ./src ./src
 
 RUN cargo install --target x86_64-unknown-linux-musl --path .
 
+RUN ls ./
+RUN ls /environment/target/x86_64-unknown-linux-musl/release/
+RUN pwd
+RUN curl -i http://google.com
+
 ################second stage
 FROM scratch
 
 EXPOSE 8081
+EXPOSE 8082
+EXPOSE 8083
 
 #test
 #COPY --from=build /usr/local/cargo/bin/core .
 
-#works
-###COPY --from=build /environment/target/x86_64-unknown-linux-musl/release/core .
+#works, copy binary
+COPY --from=build /environment/target/x86_64-unknown-linux-musl/release/core .
 
-###COPY --from=build /environment/storage ./storage
+# copy storage directory
+COPY --from=build /environment/storage/ .
+COPY --from=build /environment/storage/chain ./storage/chain
+COPY --from=build /environment/storage/transaction ./storage/transaction
+COPY --from=build /environment/storage/proposal ./storage/proposal
+COPY --from=build /environment/storage/state ./storage/state
 
-###CMD ["./core node-name=\"alices node\" node-id=1 port=8081 peers=127.0.0.1:8082,127.0.0.1:8083 ip=127.0.0.1:8081"]
+#ADD --from=build /environment/storage/ ./storage
+
+###############
+#CMD ["./core"]

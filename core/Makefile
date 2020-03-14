@@ -69,8 +69,8 @@ stress:
 	#while true; do make txo; make sap; sleep 60; done
 	#while true; do make txo; make create_proposal; sleep 60; done
 	#while true; do make sat; make sap; sleep 30; done
-	while true; do make stress_a; sleep 15 ; make stress_b; sleep 15 ; make stress_c; sleep 15 ; done
-	#while true; do make stress_a; sleep 60 ; done 
+	while true; do make stress_a; sleep 30 ; make stress_b; sleep 30 ; make stress_c; sleep 30 ; done
+	#while true; do make stress_a; sleep 60 ; done
 p_alice:
 	#curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" 127.0.0.1:8081/proposal/create/
 	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" localhost:8081/proposal/create/
@@ -150,3 +150,15 @@ rac:
 	#docker run -d -t -p 8081:8081 --net=host --dns=192.168.0.1 alice_node ;
 	#docker run -d -t -p 8082:8082 --net=host --dns=192.168.0.1 bob_node ;
 	#docker run -d -t -p 8083:8083 --net=host --dns=192.168.0.1 cici_node ;
+rmac:
+	docker rm -f $(docker ps -a)
+fa:
+
+	docker run -d -t -p 8081:8081 aos:latest ./core node-name="alices node" node-id=1 port=8081 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8081
+	docker run -d -t -p 8082:8082 aos:latest ./core node-name="bob's node" node-id=2 port=8082 peers=docker.for.mac.host.internal:8081,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8082
+	docker run -d -t -p 8083:8083 aos:latest ./core node-name="cici's node" node-id=3 port=8083 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8081 ip=docker.for.mac.host.internal:8083
+
+	# may need it for non mac environments
+	#docker run -d -t -p 8081:8081 aos:latest ./core node-name="alices node" node-id=1 port=8081 peers=192.168.65.0:8082,192.168.65.0:8083 ip=192.168.65.0:8081
+	#docker run -d -t -p 8082:8082 aos:latest ./core node-name="bob's node" node-id=2 port=8082 peers=192.168.65.0:8081,192.168.65.0:8083 ip=192.168.65.0:8082
+	#docker run -d -t -p 8083:8083 aos:latest ./core node-name="cici's node" node-id=3 port=8083 peers=192.168.65.0:8082,192.168.65.0:8081 ip=192.168.65.0:8083
