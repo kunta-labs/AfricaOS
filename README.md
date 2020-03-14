@@ -1,8 +1,6 @@
 # Africa Operating System (AfricaOS)
 A simple, customizable, proposal-based, replicated state machine (RSM), inspired by pBFT (Practical Byzantine Fault Tolerance) written in pure Rust
 
-### Statuses
-
 | Status Type | Status |
 | --- | --- |
 | `Travis Build` | [![Build Status](https://travis-ci.org/kunta-labs/AfricaOS.svg?branch=master)](https://travis-ci.org/kunta-labs/AfricaOS) |
@@ -67,15 +65,22 @@ make stress
 # Docker
 To build the core docker container, run
 ```
-make dbm # stands for docker build main
+make dbm # stands for "docker build main"
 ```
-
+### Pulling AOS core container
 to pull a minimal docker image of AfricaOS, run
 ```
 docker pull kuntalabs/africaos:latest
 ```
 
-# To Contribute
+### Running 3-node network
+to run the 3 containers, and set up the 3-node network, run
+```
+make rac # stands for "run all containers"
+```
+
+## To Contribute
+TODO:
 
 **under active development**
 
