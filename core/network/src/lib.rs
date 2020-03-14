@@ -502,6 +502,7 @@ impl Receiver for Server {
                        \r\nContent-Type: application/json; charset=UTF-8
                        \r\n\r\nRESPONSE FROM NODE
                        \r\n";
+
         //TODO: WRITE BACK THE RESULT PASSED
         //let data_to_write: String = format!("{}");
         match stream.write(response) {
@@ -542,6 +543,25 @@ impl API for Server {
     */
     fn invoke_action(command: &str, data: &str, request_origin: String) -> Result<String, String> {
         match command {
+
+            // TODO:
+            /*
+            @endpoint /API/block/height/
+            @desc get the top block
+            */
+
+            // TODO:
+            /*
+            @endpoint /API/block/get/{block_id}
+            @desc get the latest proposal
+            */
+
+            // TODO:
+            /*
+            @endpoint /API/proposal/latest/
+            @desc get the latest proposal
+            */
+
             /*
             @endpoint /transaction/submit/output/
             @desc for an external submission of a transaction
