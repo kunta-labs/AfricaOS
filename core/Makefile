@@ -121,10 +121,6 @@ dbb:
 dbc:
 	time docker build --force-rm --rm --network="host" --file "./DockerfileCici" --build-arg nodeType=cici -t cici_node .
 rac:
-	docker run -d -p 8081:8081 --dns=192.168.0.1 alice_node ;
-	docker run -d -p 8082:8082 --dns=192.168.0.1 bob_node ;
-	docker run -d -p 8083:8083 --dns=192.168.0.1 cici_node ;
-mdall:
 	docker run -d -t -p 8081:8081 aos:latest ./core node-name="alices node" node-id=1 port=8081 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8081
 	docker run -d -t -p 8082:8082 aos:latest ./core node-name="bob's node" node-id=2 port=8082 peers=docker.for.mac.host.internal:8081,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8082
 	docker run -d -t -p 8083:8083 aos:latest ./core node-name="cici's node" node-id=3 port=8083 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8081 ip=docker.for.mac.host.internal:8083

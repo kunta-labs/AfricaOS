@@ -67,12 +67,17 @@ make stress
 # Docker
 To build the core docker container, run
 ```
-make dbm # stands for docker build main
+make dbm # stands for "docker build main"
 ```
 
 to pull a minimal docker image of AfricaOS, run
 ```
 docker pull kuntalabs/africaos:latest
+```
+
+to run the 3 containers, and set up the 3-node network, run
+```
+make rac # stands for "run all containers"
 ```
 
 # To Contribute
