@@ -1,17 +1,10 @@
 compile:
 	RUST_BACKTRACE=1 cargo check --verbose;
 alice: clean_alice
-	#RUST_BACKTRACE=1 cargo run node-name="alice's node" port=8081 peers=192.168.0.8:8082,192.168.0.8:8083 ip=192.168.0.2:8081;
-	#RUST_BACKTRACE=1 cargo run node-name="alice's node" port=8081 peers=192.168.0.8:8082 ip=192.168.0.2:8081;
-	#RUST_BACKTRACE=1 cargo run node-name="alice's node" port=8081 peers=127.0.0.1:8081 ip=127.0.0.1:8081;
 	RUST_BACKTRACE=1 cargo run node-name="alice's node" node-id=1 port=8081 peers=127.0.0.1:8082,127.0.0.1:8083 ip=127.0.0.1:8081  #> run.log;
 bob: clean_bob
-	#RUST_BACKTRACE=1 cargo run node-name="bob's node" port=8082 peers=192.168.0.2:8081,192.168.0.8:8083 ip=192.168.0.8:8082;
-	#RUST_BACKTRACE=1 cargo run node-name="bob's node" port=8082 peers=192.168.0.2:8081 ip=192.168.0.8:8082;
 	RUST_BACKTRACE=1 cargo run node-name="bob's node" node-id=2 port=8082 peers=127.0.0.1:8081,127.0.0.1:8083 ip=127.0.0.1:8082 #> run.log;
 cici: clean_cici
-	#RUST_BACKTRACE=1 cargo run node-name="cici's node" port=8083 peers=192.168.0.8:8082,192.168.0.2:8081 ip=192.168.0.8:8083;
-	#RUST_BACKTRACE=1 cargo run node-name="cici's node" port=8083 peers=192.168.0.2:8081 ip=192.168.0.8:8083;
 	RUST_BACKTRACE=1 cargo run node-name="cici's node" node-id=3 port=8083 peers=127.0.0.1:8082,127.0.0.1:8081 ip=127.0.0.1:8083  #> run.log;
 reset_alice:
 	rm storage/.DS_Store ; rm -r .DS_Store ; make clean_alice ; make get ; make alice
@@ -40,7 +33,6 @@ clean_bob:
 	rm -rf ./storage/state/* ;
 	make create_directories ;
 	#cargo clean ;
-
 clean_cici:
 	rm -f ./storage/proposals.db ;
 	rm -rf ./storage/proposal/* ;
@@ -66,29 +58,19 @@ get:
 rms:
 	rm ./storage/proposal/*
 stress:
-	#while true; do make txo; make sap; sleep 60; done
-	#while true; do make txo; make create_proposal; sleep 60; done
-	#while true; do make sat; make sap; sleep 30; done
 	while true; do make stress_a; sleep 30 ; make stress_b; sleep 30 ; make stress_c; sleep 30 ; done
-	#while true; do make stress_a; sleep 60 ; done
 p_alice:
-	#curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" 127.0.0.1:8081/proposal/create/
-	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" localhost:8081/proposal/create/
+	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" 127.0.0.1:8081/proposal/create/
 p_bob:
-	#curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8082" 127.0.0.1:8082/proposal/create/
-	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8082" localhost:8082/proposal/create/
+	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8082" 127.0.0.1:8082/proposal/create/
 p_cici:
-	#curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8083" 127.0.0.1:8083/proposal/create/
-	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8083" localhost:8083/proposal/create/
+	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8083" 127.0.0.1:8083/proposal/create/
 stress_a:
 	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" --header "User-Agent: 100,200,test_string" 127.0.0.1:8081/transaction/submit/output ;
-	#curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" 127.0.0.1:8081/proposal/create/
 stress_b:
 	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8082" --header "User-Agent: 100,200,test_string" 192.168.0.8:8082/transaction/submit/output ;
-	#curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8082" 192.168.0.8:8082/proposal/create/ ;
 stress_c:
 	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8083" --header "User-Agent: 100,200,test_string" 192.168.0.8:8083/transaction/submit/output ;
-	#curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8083" 192.168.0.8:8083/proposal/create/ ;
 sat:
 	for i in {1..2}; do curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" --header "User-Agent: 100,200,test_string" 127.0.0.1:8081/transaction/submit/output ; done
 	for i in {1..2}; do curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8082" --header "User-Agent: 100,200,test_string" 192.168.0.8:8082/transaction/submit/output ; done

@@ -32,6 +32,7 @@ RUN curl -i http://google.com
 ################second stage
 FROM scratch
 
+# test ports for a, b, and c
 EXPOSE 8081
 EXPOSE 8082
 EXPOSE 8083

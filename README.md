@@ -2,6 +2,10 @@
 [![Build Status](https://travis-ci.org/kunta-labs/AfricaOS.svg?branch=master)](https://travis-ci.org/kunta-labs/AfricaOS)
 [![Issues](https://img.shields.io/github/issues/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS/issues)
 [![Last commit](https://img.shields.io/github/last-commit/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS/commits/master)
+![Docker Stars](https://img.shields.io/docker/stars/kuntalabs/ffmpeg.svg)
+![Docker Pulls](https://img.shields.io/docker/pulls/jrottenberg/ffmpeg.svg)
+![Docker Automated](https://img.shields.io/docker/automated/jrottenberg/ffmpeg.svg)
+![Docker Build](https://img.shields.io/docker/build/jrottenberg/ffmpeg.svg)
 [![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/kunta-labs/AfricaOS/blob/master/LICENSE)
 [![Downloads](https://img.shields.io/github/downloads/kunta-labs/AfricaOS/total.svg)](https://github.com/kunta-labs/AfricaOS/releases)
 [![Latest release](https://img.shields.io/github/v/release/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS/releases)
@@ -55,6 +59,19 @@ To create/submit a new transaction every m seconds
 ```
 make stress
 ```
+
+# Docker
+To build the core docker container, run
+```
+make dbm # stands for docker build main
+```
+
+to pull a minimal docker image of AfricaOS, run
+```
+docker pull kuntalabs/africaos:latest
+```
+
+# To Contribute
 
 **under active development**
 
