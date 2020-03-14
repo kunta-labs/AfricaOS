@@ -77,7 +77,7 @@ macro_rules! transaction_output_logic {
 mod tests {
 
     //use transaction::{State};
-    //#[macro_use]
+    //#[macro_uses]
     //extern crate json;
 
     use json::{JsonValue};

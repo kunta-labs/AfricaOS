@@ -7,7 +7,7 @@ ARG nodeType
 
 RUN mkdir /environment/
 
-COPY . /environment/
+COPY ./core /environment/
 
 WORKDIR /environment/
 
@@ -17,12 +17,13 @@ RUN rustup target add x86_64-unknown-linux-musl
 RUN cargo build --release
 
 # Copy the source and build the application.
-COPY ./core/src ./src
+COPY ./src ./src
 
 ####
 #RUN apt-get install pkg-config libx11-dev libxmu-dev
 
 RUN cargo install --target x86_64-unknown-linux-musl --path .
+
 
 ################second stage
 FROM scratch
