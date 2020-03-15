@@ -12,7 +12,7 @@ A simple, customizable, proposal-based, replicated state machine (RSM), inspired
 | `Docker Automated` | [![Docker Automated](https://img.shields.io/docker/cloud/automated/kuntalabs/africaos.svg)](https://hub.docker.com/r/kuntalabs/africaos) |
 | `Docker Build` | [![Docker Build](https://img.shields.io/docker/cloud/build/kuntalabs/africaos.svg)](https://hub.docker.com/r/kuntalabs/africaos) |
 | `License` | [![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/kunta-labs/AfricaOS/blob/master/LICENSE) |
-| `Downloads` | [![Downloads](https://img.shields.io/github/downloads/kunta-labs/AfricaOS/total.svg)](https://github.com/kunta-labs/AfricaOS/releases) |
+| `Releases` | [![Downloads](https://img.shields.io/github/downloads/kunta-labs/AfricaOS/total.svg)](https://github.com/kunta-labs/AfricaOS/releases) |
 | `Lastest Release` | [![Latest release](https://img.shields.io/github/v/release/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS/releases) |
 | `Top Language` | [![Top language](https://img.shields.io/github/languages/top/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS) |
 | `Code Size` | [![Code size in bytes](https://img.shields.io/github/languages/code-size/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS) |
