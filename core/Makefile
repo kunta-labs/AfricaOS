@@ -81,10 +81,6 @@ sap:
 	for i in {1..1}; do curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8083" 192.168.0.8:8083/proposal/create/ ; done
 create_proposal:
 	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" 127.0.0.1:8081/proposal/create/
-txo:
-	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" --header "transaction_data: 100,200,test_string" 127.0.0.1:8081/transaction/submit/output
-txi:
-	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8080\nTXDATA: 100,200,test_string" 127.0.0.1:8080/transaction/submit/input
 test:
 	cargo test ;
 	make test_all ;
