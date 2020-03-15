@@ -9,7 +9,7 @@ A simple, customizable, proposal-based, replicated state machine (RSM), inspired
 | `Last Commit` | [![Last commit](https://img.shields.io/github/last-commit/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS/commits/master) |
 | `Docker Stars` | [![Docker Stars](https://img.shields.io/docker/stars/kuntalabs/africaos.svg)](https://hub.docker.com/r/kuntalabs/africaos) |
 | `Docker Pulls` | [![Docker Pulls](https://img.shields.io/docker/pulls/kuntalabs/africaos.svg)](https://hub.docker.com/r/kuntalabs/africaos) |
-| `Docker Automated` | [![Docker Automated](https://img.shields.io/docker/automated/kuntalabs/africaos.svg)](https://hub.docker.com/r/kuntalabs/africaos) |
+| `Docker Automated` | [![Docker Automated](https://img.shields.io/docker/cloud/automated/kuntalabs/africaos.svg)](https://hub.docker.com/r/kuntalabs/africaos) |
 | `Docker Build` | [![Docker Build](https://img.shields.io/docker/build/kuntalabs/africaos.svg)](https://hub.docker.com/r/kuntalabs/africaos) |
 | `License` | [![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/kunta-labs/AfricaOS/blob/master/LICENSE) |
 | `Downloads` | [![Downloads](https://img.shields.io/github/downloads/kunta-labs/AfricaOS/total.svg)](https://github.com/kunta-labs/AfricaOS/releases) |
