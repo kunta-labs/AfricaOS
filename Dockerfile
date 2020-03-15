@@ -26,6 +26,18 @@ COPY ./core/src ./src
 
 RUN cargo install --target x86_64-unknown-linux-musl --path .
 
+# rm directories to create blank slate for build
+RUN rm -rf /environment/storage/chain
+RUN rm -rf /environment/storage/transaction
+RUN rm -rf /environment/storage/proposal
+RUN rm -rf /environment/storage/state
+
+# create directories as blank folders
+RUN mkdir /environment/storage/chain
+RUN mkdir /environment/storage/transaction
+RUN mkdir /environment/storage/proposal
+RUN mkdir /environment/storage/state
+
 ################second stage
 FROM scratch
 
