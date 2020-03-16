@@ -308,7 +308,7 @@ impl StateTransition for Node {
                                 let calculated_proposal_creator_id: i32 = Proposal::calculate_next_proposal_creator_id(self.peers.peer_set.len(), block_id) as i32;
                                 println!("calculated_proposal_creator_id: {} latest block_id: {}", calculated_proposal_creator_id, block_id);
                                 if calculated_proposal_creator_id == self.node_id {
-                                    thread::sleep_ms(5000);
+                                    thread::sleep_ms(delay);
                                     Proposal::create( self.clone().ip );
                                 } else {
 

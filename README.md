@@ -13,7 +13,7 @@ A simple, customizable, proposal-based, replicated state machine (RSM), inspired
 | `Docker Build` | [![Docker Build](https://img.shields.io/docker/cloud/build/kuntalabs/africaos.svg)](https://hub.docker.com/r/kuntalabs/africaos) |
 | `License` | [![License](https://img.shields.io/badge/license-GPL-blue.svg)](https://github.com/kunta-labs/AfricaOS/blob/master/LICENSE) |
 | `Releases` | [![Releases](https://img.shields.io/github/downloads/kunta-labs/AfricaOS/total.svg)](https://github.com/kunta-labs/AfricaOS/releases) |
-| `Lastest Release` | [![Latest release](https://img.shields.io/github/v/release/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS/releases) |
+| `Latest Release` | [![Latest release](https://img.shields.io/github/v/release/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS/releases) |
 | `Top Language` | [![Top language](https://img.shields.io/github/languages/top/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS) |
 | `Code Size` | [![Code size in bytes](https://img.shields.io/github/languages/code-size/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS) |
 | `Chat` | ![Discord](https://img.shields.io/discord/430502296699404308) |
@@ -25,28 +25,28 @@ https://cp.xscode.com/Kunta-Labs/AfricaOS
 # To start a single node
 Edit the Makefile in /core/ to input the IP addresses, and ports for your other nodes. This version comes with a 3-node setup, for Alice, Bob, and Cici (the default is 127.0.0.1:x, to run all 3 nodes on a single workstation.
 ```
-make alice
+make alice # from inside ./core/
 ```
 
 To reset Alice
 ```
-make clean_alice
+make clean_alice # from inside ./core/
 ```
 
 # To start 3-node network
 To create Bob, copy the folder, and create another folder one level up from the projects root, and run the same command for bob
 ```
-make bob
+make bob # from inside ./core/
 ```
 
 To reset bob,
 ```
-make clean_bob
+make clean_bob # from inside ./core/
 ```
 
 Do the same for Cici
 ```
-make cici
+make cici # from inside ./core/
 ```
 
 Now they should be pointed to each other from a peer perspective
@@ -54,20 +54,21 @@ Now they should be pointed to each other from a peer perspective
 # Begin proposal generation
 This will submit a first proposal to alice, which will initiate proposal generation amongst each node (alice, bob, and cici)
 ```
-make p_alice
+make p_alice # from inside ./core/
 ```
 
 # Stress with output/female transaction
 To create/submit a new transaction every m seconds
 ```
-make stress
+make stress # from inside ./core/
 ```
 
 # Docker
-To build the core docker container, run
+To build the core docker container, run (from inside ./)
 ```
 make dbm # stands for "docker build main"
 ```
+
 ### Pulling AOS core container
 to pull a minimal docker image of AfricaOS, run
 ```
@@ -75,13 +76,14 @@ docker pull kuntalabs/africaos:latest
 ```
 
 ### Running 3-node network
-to run the 3 containers, and set up the 3-node network, run
+to run the 3 containers, and set up the 3-node network, run (from inside ./core/)
 ```
 make rac # stands for "run all containers"
 ```
 
 ## To Contribute
 TODO:
+- Submit Issue using template
 
 **under active development**
 
