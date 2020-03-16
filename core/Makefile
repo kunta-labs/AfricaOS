@@ -71,6 +71,12 @@ stress_b:
 	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8082" --header "User-Agent: 100,200,test_string" 192.168.0.8:8082/transaction/submit/output ;
 stress_c:
 	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8083" --header "User-Agent: 100,200,test_string" 192.168.0.8:8083/transaction/submit/output ;
+api_height:
+	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8083" --header "User-Agent: NOT_USED" 127.0.0.1:8081/API/block/height/ ;
+api_block_id:
+	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8083" --header "User-Agent: 2" 127.0.0.1:8081/API/block/get/ ;
+api_latest_p:
+	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8083" --header "User-Agent: NOT_USED" 127.0.0.1:8081/API/proposal/latest/ ;
 sat:
 	for i in {1..2}; do curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" --header "User-Agent: 100,200,test_string" 127.0.0.1:8081/transaction/submit/output ; done
 	for i in {1..2}; do curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8082" --header "User-Agent: 100,200,test_string" 192.168.0.8:8082/transaction/submit/output ; done
@@ -104,8 +110,6 @@ test_hash:
 	cd hash; RUST_BACKTRACE=1 cargo test --verbose;
 test_signature:
 	cd signature; RUST_BACKTRACE=1 cargo test --verbose;
-dbm: #dbmain
-	time docker build --file "./DockerfileAOS" --build-arg nodeType=$1 -t aos .
 dball:
 	make dba ;
 	make dbb ;
@@ -116,7 +120,7 @@ dbb:
 	time docker build --force-rm --rm --network="host" --file "./DockerfileBob" --build-arg nodeType=bob -t bob_node .
 dbc:
 	time docker build --force-rm --rm --network="host" --file "./DockerfileCici" --build-arg nodeType=cici -t cici_node .
-rac:
+rac: # run all containers
 	docker run -d -t -p 8081:8081 aos:latest ./core node-name="alices node" node-id=1 port=8081 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8081
 	docker run -d -t -p 8082:8082 aos:latest ./core node-name="bob's node" node-id=2 port=8082 peers=docker.for.mac.host.internal:8081,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8082
 	docker run -d -t -p 8083:8083 aos:latest ./core node-name="cici's node" node-id=3 port=8083 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8081 ip=docker.for.mac.host.internal:8083

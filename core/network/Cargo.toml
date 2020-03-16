@@ -10,4 +10,5 @@ reqwest = "0.9.22"
 proposal = { path = "../proposal" }
 encode = { path = "../encode" }
 transaction = { path = "../transaction" }
+block = { path = "../block" }
 url = "2.1.0"

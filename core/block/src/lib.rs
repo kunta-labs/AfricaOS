@@ -226,7 +226,7 @@ impl ReadBlockFromDB for DB {
 
     /*
     @name get_block_by_block_id
-    @desc
+    @desc return block by block id
     */
     fn get_block_by_block_id(block_id: i64) -> Option<Block> {
         let block_string_result: Option<String> = Self::read_block(block_id);
@@ -690,11 +690,15 @@ impl CommitBlock for Block {
 //TODO: change access to DB directly for modules calling ReadBlockFromDB - later
 pub trait ReadBlock {
     fn get_latest_block_id() -> Option<i64>;
+    fn get_block_by_block_id(block_id: i64) -> Option<Block>;
 }
 
 impl ReadBlock for Block {
     fn get_latest_block_id() -> Option<i64> {
         DB::get_latest_block_id()
+    }
+    fn get_block_by_block_id(block_id: i64) -> Option<Block> {
+        DB::get_block_by_block_id(block_id)
     }
 }
 

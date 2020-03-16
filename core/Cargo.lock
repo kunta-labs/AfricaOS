@@ -666,6 +666,7 @@ dependencies = [
 name = "network"
 version = "0.1.0"
 dependencies = [
+ "block 0.1.0",
  "encode 0.1.0",
  "http 0.1.18 (registry+https://github.com/rust-lang/crates.io-index)",
  "proposal 0.1.0",

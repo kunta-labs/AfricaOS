@@ -36,6 +36,8 @@ use url::Url;
 use reqwest::header::{USER_AGENT, CONTENT_TYPE, ORIGIN};
 use encode::{Encoder, Base64Encode, Base64Decode};
 use transaction::{Transaction, CreateNewOuputTransaction};
+use block::{Block, ReadBlock, BlockToJson};
+
 
 pub trait PayloadParser {
     /*
@@ -497,15 +499,20 @@ impl Receiver for Server {
     */
     fn handle_write(mut stream: TcpStream, result: String) -> Result<String, String> {
 
-        let response = b"HTTP/1.1 200 OK
-                       \r\nContent-Length: 10
-                       \r\nContent-Type: application/json; charset=UTF-8
-                       \r\n\r\nRESPONSE FROM NODE
-                       \r\n";
+        //TODO: set CONTENT-LENGTH dynamically
+        let response_result = format!( "HTTP/1.1 200 OK
+                                       \r\nContent-Length: 100
+                                       \r\nContent-Type: application/json; charset=UTF-8
+                                       \r\n\r\n{}
+                                       \r\n", result );
+        //a.iter().cloned().collect();
+        //let c = &a[..]; // c: &[u8]
+
+        let response_string: String = String::from(response_result);
 
         //TODO: WRITE BACK THE RESULT PASSED
         //let data_to_write: String = format!("{}");
-        match stream.write(response) {
+        match stream.write(response_string.as_bytes()) {
             Ok(_) => {
                 println!("handle_write, Stream Write Success");
                 Ok(String::from("Response Sent"))
@@ -549,18 +556,67 @@ impl API for Server {
             @endpoint /API/block/height/
             @desc get the top block
             */
+            "/API/block/height/" => {
+                println!("API Block Height: {}, {}, {}", command, data, request_origin);
+                // get latest block id
+                let top_block_id: Option<i64> = Block::get_latest_block_id();
+                match top_block_id {
+                    Some(block_id) => {
+                        let block_to_return: Option<Block> = Block::get_block_by_block_id(block_id);
+                        match block_to_return {
+                            Some(block) => {
+                                Ok( String::from(Block::to_json(block).dump()) )
+                            },
+                            None => {
+                                Err( String::from("API Block block by ID: Block Option was null") )
+                            }
+                        }
+                    },
+                    None => {
+                        Err( String::from("API Block height: NO TOP BLOCK...") )
+                    }
+                }
+
+            }
 
             // TODO:
             /*
-            @endpoint /API/block/get/{block_id}
+            @endpoint /API/block/get/
             @desc get the latest proposal
             */
+            "/API/block/get/" => {
+                println!("API Block by ID get: {}, {}, {}", command, data, request_origin);
+                // get block by id
+                let block_id = data.parse::<i64>().unwrap();
+                let block_to_return: Option<Block> = Block::get_block_by_block_id(block_id);
+                match block_to_return {
+                    Some(block) => {
+                        Ok( String::from(Block::to_json(block).dump()) )
+                    },
+                    None => {
+                        Err( String::from("API Block by ID: Block Option was null") )
+                    }
+                }
 
-            // TODO:
-            /*
+            }
+
+            /* TODO:
             @endpoint /API/proposal/latest/
             @desc get the latest proposal
             */
+            "/API/proposal/latest/" => {
+                // get latest proposal id
+                println!("API Proposal Latest: {}, {}, {}", command, data, request_origin);
+                let latest_proposal: Option<Proposal> = Proposal::get_latest_proposal();
+                match latest_proposal {
+                    Some(proposal) => {
+                        Ok( String::from(Proposal::to_json(proposal)) )
+                    },
+                    None => {
+                        Err( String::from("API latest proposal: Proposal Option was null") )
+                    }
+                }
+            }
 
             /*
             @endpoint /transaction/submit/output/
