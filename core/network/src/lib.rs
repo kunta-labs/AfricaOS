@@ -501,7 +501,7 @@ impl Receiver for Server {
 
         //TODO: set CONTENT-LENGTH dynamically
         let response_result = format!( "HTTP/1.1 200 OK
-                                       \r\nContent-Length: 100
+                                       \r\nContent-Length: 1000
                                        \r\nContent-Type: application/json; charset=UTF-8
                                        \r\n\r\n{}
                                        \r\n", result );
@@ -678,6 +678,7 @@ impl API for Server {
                                 Ok(verdict) => {
                                     match verdict {
                                         ProposalValidationResult::Valid => {
+                                            //TODO: check if we already stored the proposal, we may be receiving it because author may be re-broadcasting it
                                             Proposal::store_proposal(proposal.clone(), ProposalStatus::Accepted);
                                             Ok(String::from("Proposal Valid"))
                                         },
