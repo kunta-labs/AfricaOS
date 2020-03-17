@@ -354,8 +354,8 @@ impl StateTransition for Node {
                                                           peer.clone().location,
                                                           node_ip.clone()).is_ok() {
                         println!("[determine_transition_step], broadcast_proposal_created SUCCESS...");
-                        //TODO: update proposal to created status if
-                        DB::update_proposal(proposal.clone(), "created");
+                        //TODO: update proposal to created status if we broadcasted to all peers, not during interim
+                        //DB::update_proposal(proposal.clone(), "created");
                     } else {
                         println!("[determine_transition_step], broadcast_proposal_created FAILED...");
                         //TODO: could update to NotValid of FailedCreate?
@@ -424,6 +424,19 @@ impl StateTransition for Node {
                                         // TODO: could be we just have to wait for the other person
                                         //at_least_one_peer_rejected = true;
                                         missing_peer_vote = true;
+
+                                        //TODO: rebroadcast our created proposal, since a peer key doesnt exist yet
+                                        for peer in self.peers.clone().peer_set {
+                                            //TODO: decide who we should broadcast to
+                                            if Server::broadcast_proposal_created(proposal.clone(),
+                                                                                  peer.clone().location,
+                                                                                  node_ip.clone()).is_ok() {
+                                                println!("[determine_transition_step, peer does not exist], broadcast_proposal_created SUCCESS...");
+                                            } else {
+                                                println!("[determine_transition_step, peer does not exist], broadcast_proposal_created FAILED...");
+                                            }
+                                        }
+
                                     }
                                 },
                                 None => {
