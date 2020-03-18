@@ -614,15 +614,6 @@ impl StateTransition for Node {
 
                 for peer in self.peers.clone().peer_set {
 
-                    // match proposal_object_from_disk.has_key( peer.clone().location ) {
-                    //     true => {
-                    //
-                    //     },
-                    //     false => {
-                    //
-                    //     }
-                    // }
-
                     if Server::broadcast_proposal_resolution(proposal.clone(),
                                                           peer.clone().location,
                                                           node_ip.clone()).is_ok() {
