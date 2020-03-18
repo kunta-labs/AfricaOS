@@ -547,6 +547,7 @@ impl StateTransition for Node {
                 println!("[determine_transition_step], accepted_by_network...");
                 let block_commit_result: Result<(),String> = Block::commit_if_valid(proposal.clone().proposal_block);
                 if block_commit_result.is_ok() {
+
                     for peer in self.peers.clone().peer_set {
                         //TODO: decide who we should broadcast to
                         if Server::broadcast_proposal_resolution(proposal.clone(),
@@ -563,7 +564,9 @@ impl StateTransition for Node {
                         }
                         //TODO: and change proposal_status to Accepted_Broadcasted after sending to all peers
                     }
+
                     DB::update_proposal(proposal.clone(), "committed");
+
                 } else {
                     println!("[ERROR] Block commit result is NOT OKAY!");
                 }
@@ -603,8 +606,24 @@ impl StateTransition for Node {
 
             },
             ProposalStatus::Committed => {
-                //TODO: remove this!
+                //TODO: remove this?
                 //TODO: received enough responses from network. Nothing further to be done
+                //TODO: rebroadcast the committed proposal, for nodes who have no processed it
+                // if we are here, then the proposal responses were received from each node
+                let proposal_object_from_disk: Option<JsonValue> = Proposal::read_proposal_file_by_id(proposal.clone().proposal_id);
+
+                for peer in self.peers.clone().peer_set {
+
+                    if Server::broadcast_proposal_resolution(proposal.clone(),
+                                                          peer.clone().location,
+                                                          node_ip.clone()).is_ok() {
+                        println!("[determine_transition_step], broadcast_proposal_resolution SUCCESS...");
+                    } else {
+                        println!("[determine_transition_step], broadcast_proposal_resolution FAILED...");
+
+                    }
+
+                }
 
             },
             ProposalStatus::NotValid => {
