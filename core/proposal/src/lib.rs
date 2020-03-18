@@ -1127,10 +1127,10 @@ impl ProposalResolutionAccepted for Proposal {
                    .clone()
                    .validate_proposal_block()
                    .is_ok() {
-                       println!("invoke_action(), proposal_resolution - validate_proposal_block SUCCESS");
+                       println!("invoke_action(), proposal_resolution [AcceptedByNetwork] - validate_proposal_block SUCCESS");
                        Ok(())
                 } else {
-                       println!("invoke_action(), proposal_resolution - validate_proposal_block FAILED");
+                       println!("invoke_action(), proposal_resolution [AcceptedByNetwork] - validate_proposal_block FAILED");
                        Err(())
                 }
             },
@@ -1142,15 +1142,16 @@ impl ProposalResolutionAccepted for Proposal {
             },
             ProposalStatus::Committed => {
                 println!("invoke_action(), proposal_resolution - received_proposal STATUS IS Commited");
+
                 //TODO: WE ACCEPTED IT, BROADCASTED IT AND WE JUST RECEIVED A RESOLUTION
                 if received_proposal
                    .clone()
                    .validate_proposal_block()
                    .is_ok() {
-                       println!("invoke_action(), proposal_resolution - validate_proposal_block SUCCESS");
+                       println!("invoke_action(), proposal_resolution [Committed] - validate_proposal_block SUCCESS");
                        Ok(())
                 } else {
-                       println!("invoke_action(), proposal_resolution - validate_proposal_block FAILED");
+                       println!("invoke_action(), proposal_resolution [Committed] - validate_proposal_block FAILED");
                        Err(())
                 }
             },

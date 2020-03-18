@@ -58,7 +58,7 @@ get:
 rms:
 	rm ./storage/proposal/*
 stress:
-	while true; do make stress_a; sleep 30 ; make stress_b; sleep 30 ; make stress_c; sleep 30 ; done
+	while true; do make stress_a; sleep 60 ; make stress_b; sleep 60 ; make stress_c; sleep 60 ; done
 p_alice:
 	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" 127.0.0.1:8081/proposal/create/
 p_bob:

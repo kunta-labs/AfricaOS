@@ -876,6 +876,7 @@ impl API for Server {
                         //TODO: IF WE FOUND THE SUBMITTED PROPOSAL IN OUR LOCAL SET
                         //TODO: maybe change to same_proposal.is_some()?
                         if found_proposal.is_some() {
+
                             println!("invoke_action(), proposal_resolution - WE FOUND A LOCAL PROPOSAL MATCH");
                             match found_proposal.clone().unwrap().proposal_status {
                                 //TODO: CHECK IF THIS NODE ACCEPTED THE PROPOSAL AND BROADCASTED ALREADY
@@ -901,6 +902,7 @@ impl API for Server {
                                     Err(String::from("Proposal resolution: Error: found_proposal is not the correct status! expected to be ProposalStatus::AcceptedBroadcasted"))
                                 }
                             }
+
                         } else {
                             Err(String::from("Proposal resolution: Error: all_proposals option was none"))
                         }
