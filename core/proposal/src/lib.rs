@@ -403,8 +403,9 @@ impl ReadProposalFromDB for DB {
         let parsed_result: Result<JsonValue, json::Error> = json::parse( &format!(r#"{}"#, proposal_index) );
         match parsed_result {
             Ok(parsed) => {
-                println!("proposal index parsed: {}", parsed["proposals"]);
-                println!("PI parse example 0 {}", parsed["proposals"]["0"]);
+                //TODO: remove for log noise
+                //println!("proposal index parsed: {}", parsed["proposals"]);
+                //println!("PI parse example 0 {}", parsed["proposals"]["0"]);
                 Some(parsed)
             },
             Err(_) => {
@@ -431,8 +432,9 @@ impl ReadProposalFromDB for DB {
         let parsed_result: Result<JsonValue, json::Error> = json::parse( &format!(r#"{}"#, proposal_index) );
         match parsed_result {
             Ok(parsed) => {
-                println!("get_proposal_peer_status_as_json, proposal index parsed: {}", parsed["proposals"]);
-                println!("get_proposal_peer_status_as_json, PI parse example 0 {}", parsed["proposals"]["0"]);
+                //TODO: remove for log noise
+                //println!("get_proposal_peer_status_as_json, proposal index parsed: {}", parsed["proposals"]);
+                //println!("get_proposal_peer_status_as_json, PI parse example 0 {}", parsed["proposals"]["0"]);
                 Some(parsed)
             },
             Err(_) => {
@@ -504,9 +506,8 @@ impl ReadProposalFromDB for DB {
                         if furthest_proposal_to_fetch < 0 {
                             furthest_proposal_to_fetch = 0;
                         } else {}
-                        println!("further_proposal_to_fetch: {} - {} - {}", furthest_proposal_to_fetch,
-                                                                        highest_proposal_to_fetch,
-                                                                        proposal_index.to_string());
+                        println!("further_proposal_to_fetch: {} - {}", furthest_proposal_to_fetch,
+                                                                        highest_proposal_to_fetch);
                         for proposal_id in furthest_proposal_to_fetch..highest_proposal_to_fetch {
                             let stringed_proposal_id: String = format!("{}", proposal_id);
                             let json_proposal_representation: JsonValue = proposal_index["proposals"][ stringed_proposal_id.as_str() ].clone();
@@ -914,6 +915,16 @@ impl ProposalValidator for Proposal {
                            ||
                            proposal.clone().proposal_status == ProposalStatus::AcceptedByNetwork
                            ||
+
+                           // proposal.clone().proposal_status == ProposalStatus::RejectedBroadcasted
+                           // ||
+                           // proposal.clone().proposal_status == ProposalStatus::RejectedByNetwork
+                           // ||
+                           // proposal.clone().proposal_status == ProposalStatus::NotValidIncorrectProposalHash
+                           // ||
+                           // proposal.clone().proposal_status == ProposalStatus::NotValidIncorrectNextBlockIndex
+                           // ||
+
                            proposal.clone().proposal_status == ProposalStatus::Committed
                            ||
                            proposal.clone().proposal_status == ProposalStatus::Accepted
