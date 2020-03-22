@@ -504,8 +504,8 @@ impl StateTransition for Node {
                 //TODO: COULD CHANGE THIS TO BROADCAST RESPONSE?
 
                 //Test because some nodes broadcast acceptance, but don't get the most updated block
-                /*
-                *** test remove: do we need to broadcast a block query upon reaching a proposal we already broadcasted
+
+                //*** test remove: do we need to broadcast a block query upon reaching a proposal we already broadcasted
                 let local_block_id_option: Option<i64> = DB::get_latest_block_id();
                 match local_block_id_option {
                     Some(local_block_id) => { // successfuly fetch block id
@@ -528,7 +528,7 @@ impl StateTransition for Node {
 
                     }
                 }
-                */
+
 
                 for peer in self.peers.clone().peer_set {
                     //TODO: decide who we should broadcast to
@@ -610,8 +610,8 @@ impl StateTransition for Node {
                 //TODO: enable this so rejections can continue just as well as acceptances
 
                 //Test because some nodes broadcast acceptance, but don't get the most updated block
-                /*
-                *** test remove: do we need to broadcast a block query upon reaching a proposal we already broadcasted
+
+                //*** test remove: do we need to broadcast a block query upon reaching a proposal we already broadcasted
                 let local_block_id_option: Option<i64> = DB::get_latest_block_id();
                 match local_block_id_option {
                     Some(local_block_id) => { // successfuly fetch block id
@@ -634,7 +634,7 @@ impl StateTransition for Node {
 
                     }
                 }
-                */
+
 
                 for peer in self.peers.clone().peer_set {
                     //TODO: decide who we should broadcast to

@@ -124,3 +124,19 @@ rac: # run all containers
 	docker run -d -p 8081:8081 aos:latest ./core node-name="alices node" node-id=1 port=8081 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8081
 	docker run -d -p 8082:8082 aos:latest ./core node-name="bob's node" node-id=2 port=8082 peers=docker.for.mac.host.internal:8081,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8082
 	docker run -d -p 8083:8083 aos:latest ./core node-name="cici's node" node-id=3 port=8083 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8081 ip=docker.for.mac.host.internal:8083
+
+
+#docker run -d -p 8081:8081 kuntalabs/africaos:latest ./core node-name="alices node" node-id=1 port=8081 peers=34.228.71.50:8082,3.95.198.17:8083 ip=52.201.231.126:8081
+#docker run -d -p 8082:8082 kuntalabs/africaos:latest ./core node-name="bob's node" node-id=2 port=8082 peers=52.201.231.126:8081,3.95.198.17:8083 ip=34.228.71.50:8082
+#docker run -d -p 8083:8083 kuntalabs/africaos:latest ./core node-name="cici's node" node-id=3 port=8083 peers=34.228.71.50:8082,52.201.231.126:8081 ip=3.95.198.17:8083
+
+pa_aws:
+	curl -d 'TESTSTRING' --header "Origin: 52.201.231.126:8081" 52.201.231.126:8081/proposal/create/
+stress_aws:
+	while true; do make stress_a_aws; sleep 60 ; make stress_b_aws; sleep 60 ; make stress_c_aws; sleep 60 ; done
+stress_a_aws:
+	curl -d 'TESTSTRING' --header "Origin: 52.201.231.126:8081" --header "User-Agent: 100,200,test_string" 52.201.231.126:8081/transaction/submit/output ;
+stress_b_aws:
+	curl -d 'TESTSTRING' --header "Origin: 34.228.71.50:8082" --header "User-Agent: 100,200,test_string" 34.228.71.50:8082/transaction/submit/output ;
+stress_c_aws:
+	curl -d 'TESTSTRING' --header "Origin: 3.95.198.17:8083" --header "User-Agent: 100,200,test_string" 3.95.198.17:8083/transaction/submit/output ;
