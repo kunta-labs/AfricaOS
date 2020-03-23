@@ -18,6 +18,9 @@ A simple, customizable, proposal-based, replicated state machine (RSM), inspired
 | `Code Size` | [![Code size in bytes](https://img.shields.io/github/languages/code-size/kunta-labs/AfricaOS.svg)](https://github.com/kunta-labs/AfricaOS) |
 | `Chat` | ![Discord](https://img.shields.io/discord/430502296699404308) |
 
+## Read the white paper
+
+
 ## Get the updated code, and documentation on XS code
 All code updates, and documentation are pushed to our sponsorship repository, and eventually pushed into this free repository. The sponsorship repository comes with extra features, detailed/updated documentation, and priority bug fixes. Subscribe to the sponsorship repository on XS Code:
 https://cp.xscode.com/Kunta-Labs/AfricaOS

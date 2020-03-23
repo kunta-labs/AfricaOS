@@ -510,7 +510,7 @@ impl StateTransition for Node {
                 match local_block_id_option {
                     Some(local_block_id) => { // successfuly fetch block id
 
-                        *** test remove: do we need to broadcast a block query upon reaching a proposal we already broadcasted
+                        //*** test remove: do we need to broadcast a block query upon reaching a proposal we already broadcasted
                         for peer in self.peers.clone().peer_set {
                             if Server::broadcast_block_query( ( local_block_id ),
                                                                peer.clone().location,
