@@ -226,7 +226,7 @@ impl StateTransition for Node {
             }
         };
 
-        let delay: u32 = 5000; //10000
+        let delay: u32 = 10000; //10000
         match proposals {
             Ok(p) => {
                 // PROBLEM: AT THE END OF THIS, REFRESH JSON
