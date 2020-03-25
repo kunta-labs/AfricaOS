@@ -226,7 +226,7 @@ impl StateTransition for Node {
             }
         };
 
-        let delay: u32 = 5000; //10000
+        let delay: u32 = 10000; //10000
         match proposals {
             Ok(p) => {
                 // PROBLEM: AT THE END OF THIS, REFRESH JSON
@@ -300,6 +300,7 @@ impl StateTransition for Node {
             Some(latest_proposal) => {
                 println!("[transition] - latest_proposal_option is some");
                 match latest_proposal.proposal_status {
+                    // Proposal Creator Election if recent proposal is committed or rejected by network
                     ProposalStatus::Committed |
                     ProposalStatus::RejectedByNetwork => {
                         let latest_block_id_option: Option<i64> = DB::get_latest_block_id();
@@ -501,10 +502,15 @@ impl StateTransition for Node {
 
                 //we already Accepted it and told the network
                 //TODO: COULD CHANGE THIS TO BROADCAST RESPONSE?
+
+                //Test because some nodes broadcast acceptance, but don't get the most updated block
+
+                //*** test remove: do we need to broadcast a block query upon reaching a proposal we already broadcasted
                 let local_block_id_option: Option<i64> = DB::get_latest_block_id();
                 match local_block_id_option {
                     Some(local_block_id) => { // successfuly fetch block id
-                        //Test because some nodes broadcast acceptance, but don't get the
+
+                        //*** test remove: do we need to broadcast a block query upon reaching a proposal we already broadcasted
                         for peer in self.peers.clone().peer_set {
                             if Server::broadcast_block_query( ( local_block_id ),
                                                                peer.clone().location,
@@ -515,11 +521,14 @@ impl StateTransition for Node {
                                 println!("[determine_transition_step], broadcast_block_query FAILED 1...");
                             }
                         }
+
+
                     },
                     None => {
 
                     }
                 }
+
 
                 for peer in self.peers.clone().peer_set {
                     //TODO: decide who we should broadcast to
@@ -600,6 +609,53 @@ impl StateTransition for Node {
                 //we already Rejected it and told the network
                 //TODO: enable this so rejections can continue just as well as acceptances
 
+                //Test because some nodes broadcast acceptance, but don't get the most updated block
+
+                //*** test remove: do we need to broadcast a block query upon reaching a proposal we already broadcasted
+                let local_block_id_option: Option<i64> = DB::get_latest_block_id();
+                match local_block_id_option {
+                    Some(local_block_id) => { // successfuly fetch block id
+
+
+                        for peer in self.peers.clone().peer_set {
+                            if Server::broadcast_block_query( ( local_block_id ),
+                                                               peer.clone().location,
+                                                               node_ip.clone()).is_ok() {
+                                println!("[determine_transition_step], broadcast_block_query SUCCESS 1...");
+                                //Ok(String::from("BLOCK BEHIND, QUERING TO SYNC"))
+                            } else {
+                                println!("[determine_transition_step], broadcast_block_query FAILED 1...");
+                            }
+                        }
+
+
+                    },
+                    None => {
+
+                    }
+                }
+
+
+                for peer in self.peers.clone().peer_set {
+                    //TODO: decide who we should broadcast to
+                    if Server::broadcast_proposal_response(proposal.clone(),
+                                                           peer.clone().location,
+                                                           node_ip.clone(),
+                                                           ProposalStatus::Rejected).is_ok() {
+                        println!("[determine_transition_step], broadcast_proposal_accepted SUCCESS...");
+                        // broadcast just so the receiver can receive the response until they process it
+                        //fire once, and forget doesnt work well
+                    } else {
+                        println!("[determine_transition_step], broadcast_proposal_accepted FAILED...");
+                        //TODO: could update to NotValid of FailedAccepted?
+                        //TODO check for enough responses to even update it.
+                        //update it on one successul, or all
+                        //DB::update_proposal(proposal.proposal_id, "accepted_broadcasted");
+                    }
+                    //TODO: and change proposal_status to Accepted_Broadcasted after sending to all peers
+                }
+
+
             },
             ProposalStatus::RejectedByNetwork => {
                 //TODO: do nothing, because proposal is already broadcasted
@@ -654,26 +710,7 @@ impl StateTransition for Node {
                     }
                 }
 
-                for peer in self.peers.clone().peer_set {
-                    //TODO: decide who we should broadcast to
-                    if Server::broadcast_proposal_response(proposal.clone(),
-                                                           peer.clone().location,
-                                                           node_ip.clone(),
-                                                           ProposalStatus::Rejected).is_ok() {
-                        println!("[determine_transition_step], broadcast_proposal_rejected SUCCESS...");
-                        //TODO: update proposal to created status if
-                        //TODO: this will redunantly write accepted_broadcasted per each peer...?
 
-                    } else {
-                        println!("[determine_transition_step], broadcast_proposal_rejected FAILED...");
-                        //TODO: could update to NotValid of FailedAccepted?
-                        //TODO check for enough responses to even update it.
-                        //DB::update_proposal(proposal.proposal_id, "accepted_broadcasted");
-                    }
-                    //DB::update_proposal(proposal.clone(), "rejected_broadcasted");
-                    //TODO: and change proposal_status to Accepted_Broadcasted after sending to all peers
-                }
-                DB::update_proposal(proposal.clone(), "rejected_broadcasted");
             },
             ProposalStatus::NotValidIncorrectProposalHash => {
                 //TODO:
