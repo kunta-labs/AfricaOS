@@ -235,8 +235,6 @@ impl DBReadProposal for DB {
     fn write_proposal_index(db_json_string: String) -> Result<String, Error> {
         println!("DB, write_proposal_index: Attempting to Write DB JSON INDEX");
         let file_location: String = format!("{}",PROPOSALS_DB_LOC);
-        //let mut file = fs::File::create(file_location.to_string())?;
-        //file.write( proposal_string.as_bytes() )?;
 
         //TODO: purge proposal index
         let maximum_length: i32 = 10;
@@ -459,11 +457,6 @@ impl DBReadBlock for DB {
     fn write_block_index(db_json_string: String) -> Result<String, Error> {
         println!("DB, write_block_index: Attempting to Write DB JSON INDEX FOR BLOCK");
         let file_location: String = format!("{}",BLOCKS_DB_LOC);
-        //let mut file = fs::File::create(file_location.to_string())?;
-        //file.write( proposal_string.as_bytes() )?;
-        //Self::write(db_json_string, file_location);
-        //Ok(String::from("Ok, Successfully wrote DB JSON index FOR BLOCK"))
-
 
         //TODO: purge block index
         let maximum_length: i32 = 10;

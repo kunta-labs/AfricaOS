@@ -505,7 +505,7 @@ impl ReadProposalFromDB for DB {
 
                         // TODO: proposal_index["proposals"].clone().len() should not be used to get highest proposal_id to fetch
                         //let mut highest_proposal_to_fetch: i32 = ( format!("{}", proposal_index["proposals"].clone().len() ).parse::<i32>().unwrap() );//next_proposal_id + 5;
-                        let mut highest_proposal_to_fetch: i32 =  next_proposal_id + 1; // must add 1 
+                        let mut highest_proposal_to_fetch: i32 =  next_proposal_id + 1; // must add 1
 
                         let mut furthest_proposal_to_fetch: i32 = highest_proposal_to_fetch - 1;// was 5 //next_proposal_id;
                         if furthest_proposal_to_fetch < 0 {

@@ -121,51 +121,6 @@ impl ReadBlockFromDB for DB {
     /*
     @name get_latest_block_id
     @desc get the block id
-    */
-    // fn get_latest_block_id() -> Option<i64> {
-    //     let block_index_parsed_option: Option<JsonValue> = Self::get_block_index_as_json();
-    //
-    //     match block_index_parsed_option {
-    //         Some(block_index_parsed) => {
-    //             let all_blocks = &block_index_parsed["blocks"];
-    //
-    //             if all_blocks.is_empty() {
-    //                 //None
-    //                 Some(-1)
-    //             } else {
-    //                 let mut highest_block_id: i64 = -1;
-    //                 // // iterate over each proposal entry
-    //                 let blocks_iter = all_blocks.entries();
-    //                 for (id, block_iter) in blocks_iter {
-    //
-    //                     println!("get_latest_block_id(), block: iter {}:{}", id, block_iter);
-    //                     let block_from_json: Result<Block, String> = Block::from_json( (*block_iter).clone() );
-    //                     match block_from_json {
-    //                         Ok(block) => {
-    //                             if block.block_id > highest_block_id {
-    //                                 highest_block_id = block.block_id;
-    //                             } else {
-    //                                 println!("get_latest_block_id(), block id not higher than highest_block_id: {}", block.block_id);
-    //                             }
-    //                         },
-    //                         Err(_) => {
-    //                             println!("Couldn't convert JSON block to Block type");
-    //                         }
-    //                     }
-    //                 }
-    //                 ///////////////////////////////
-    //                 Some(highest_block_id)
-    //             }
-    //         },
-    //         None => None
-    //     }
-    //
-    //
-    // }
-
-    /*
-    @name get_latest_block_id
-    @desc get the block id
     @fix - without the loop
     @problem references length of block index
     */
@@ -180,9 +135,6 @@ impl ReadBlockFromDB for DB {
                     //None
                     Some(-1)
                 } else {
-                    // if the length is 1, that means the next block number should be 1
-                    // if the length is 2, that means the next block number should be 2
-
                     // TODO: dont calculate number of blocks by length in block index
                     //let mut amount_of_blocks: i64 = all_blocks.len() as i64;
                     match Block::get_next_block_id() {
