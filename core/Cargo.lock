@@ -232,6 +232,7 @@ dependencies = [
 name = "db"
 version = "0.1.0"
 dependencies = [
+ "json 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "lock 0.1.0",
 ]

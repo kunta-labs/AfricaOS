@@ -64,7 +64,7 @@ fn main() {
 
     loop {
         node.transition();
-        thread::sleep_ms(300000); //delay between every global state transition, 30000, 30 seconds
+        thread::sleep_ms(30000); //delay between every global state transition, 30000, 30 seconds
     }
 
 }

@@ -30,7 +30,8 @@ use block::{Block,
             BlockFromString,
             JsonToBlock,
             ReadBlock,
-            CommitBlock};
+            CommitBlock,
+            BlockIDGenerator};
 
 use timestamp::{Timestamp, NewTimestamp, StringToTimestamp};
 use hash::{Hasher, CalculateSHA256Hash};
@@ -501,7 +502,11 @@ impl ReadProposalFromDB for DB {
                 match next_proposal_id_option {
                     Some(next_proposal_id) => {
                         let mut all_proposals_vector: Vec<Proposal> = Vec::new();
-                        let mut highest_proposal_to_fetch: i32 = ( format!("{}", proposal_index["proposals"].clone().len() ).parse::<i32>().unwrap() );//next_proposal_id + 5;
+
+                        // TODO: proposal_index["proposals"].clone().len() should not be used to get highest proposal_id to fetch
+                        //let mut highest_proposal_to_fetch: i32 = ( format!("{}", proposal_index["proposals"].clone().len() ).parse::<i32>().unwrap() );//next_proposal_id + 5;
+                        let mut highest_proposal_to_fetch: i32 =  next_proposal_id + 1; // must add 1 
+
                         let mut furthest_proposal_to_fetch: i32 = highest_proposal_to_fetch - 1;// was 5 //next_proposal_id;
                         if furthest_proposal_to_fetch < 0 {
                             furthest_proposal_to_fetch = 0;
@@ -977,12 +982,19 @@ impl ProposalValidator for Proposal {
             let proposal_id_string: String = format!("{}", submitted_proposal.proposal_id);
             let proposal_id_check = &all_proposals[proposal_id_string.clone()];
             if !proposal_id_check.has_key( proposal_id_string.clone().as_str() ) {
+
                     //TODO: if bob has proposal_id = 1, he checks the status of it
-                    //TODO: What is the current block_id bob has?
-                    let current_block_id: Option<i64> = Block::get_latest_block_id();
+                    //TODO: What is the current block_id bob has? -- get_latest_block_id references the length of block_index
+                    //let current_block_id: Option<i64> = Block::get_latest_block_id();
+
+                    //TODO: this is better than get_latest_block_id, since this counds block files instead of index length
+                    let current_block_id: Option<i64> = Block::get_next_block_id();
+
                     let current_block_id_result: i64 = match current_block_id {
                         Some(block_id) => {
                             println!("validate_proposal(), current_block_id, block_id: {}", block_id);
+                            // was just block_id, but substracting one since calling current_block_id
+                            // block_id
                             block_id
                         },
                         None => {

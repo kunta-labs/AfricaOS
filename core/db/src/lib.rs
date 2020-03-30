@@ -16,9 +16,15 @@ along with the AfricaOS Platform. If not, see <http://www.gnu.org/licenses/>.
 #[macro_use]
 extern crate lazy_static;
 
+#[macro_use]
+extern crate json;
+
+
 use std::fs;
 use std::io::{Write, Error, ErrorKind};
 use lock::{Locker, FileLockWrite};
+use json::{JsonValue};
+
 
 pub struct DB {
 
@@ -231,8 +237,56 @@ impl DBReadProposal for DB {
         let file_location: String = format!("{}",PROPOSALS_DB_LOC);
         //let mut file = fs::File::create(file_location.to_string())?;
         //file.write( proposal_string.as_bytes() )?;
-        Self::write(db_json_string, file_location);
-        Ok(String::from("Ok, Successfully wrote DB JSON index"))
+
+        //TODO: purge proposal index
+        let maximum_length: i32 = 10;
+
+        // parse the db_json_string
+        let parsed = json::parse( &format!(r#"{}"#, db_json_string) );
+        match parsed {
+
+            Ok(mut proposal_index) => {
+                if proposal_index.clone().has_key("proposals") {
+                    //clone proposal index after parse
+                    //let parsed_result: JsonValue = proposal_index.clone();
+                    //count number of proposals
+                    let number_of_proposals: i32 = proposal_index.clone()["proposals"].len() as i32;
+                    println!("DB, write_proposal_index, number_of_proposals: {}", number_of_proposals);
+
+                    //check length of proposal index
+                    if number_of_proposals > maximum_length {
+                        println!("DB, write_proposal_index, number_of_proposals: number_of_proposals IS GREATER THAN maximum_length");
+                        // remove length - window. Minus for genesis
+                        let proposal_to_delete: i32 = (number_of_proposals - maximum_length) - 1;
+                        //remove the proposal_id key
+                        &proposal_index["proposals"].remove( &format!("{}",proposal_to_delete) );
+                        &proposal_index["proposals"].remove( &format!("{}",proposal_to_delete+1) );
+                        &proposal_index["proposals"].remove( &format!("{}",proposal_to_delete+2) );
+                        &proposal_index["proposals"].remove( &format!("{}",proposal_to_delete+3) );
+                        //proposal_index["proposals"] = parsed_result.clone();
+                        //Self::write(proposal_index.dump(), file_location);
+                        Self::write(proposal_index.dump(), file_location);
+                        return Ok(String::from("Ok, Successfully wrote DB JSON proposal index, over max window"))
+                    } else {
+                        println!("DB, write_proposal_index, number_of_proposals: number_of_proposals IS NOT GREATER THAN maximum_length");
+                        Self::write(proposal_index.dump(), file_location);
+                        return Ok(String::from("Ok, Successfully wrote DB JSON proposal index, NOT over max window"))
+                    }
+
+                } else {
+                    println!("DB, write_proposal_index, DBWrite ERROR, write_proposa_index, proposals key did not exists in proposal index!!!");
+                    let db_proposals_key_is_missing_error = Error::new(ErrorKind::Other, "DBWrite ERROR, write_proposal_index, proposals key did not exists in proposal index!!!");
+                    Err(db_proposals_key_is_missing_error)
+                }
+            },
+            Err(_) => {
+                println!("DB, write_proposal_index, DBWrite ERROR, write_proposal_index, cant parse proposal index!!!");
+                let db_proposals_cant_parse = Error::new(ErrorKind::Other, "DBWrite ERROR, write_proposal_index, cant parse proposal index!!!");
+                Err(db_proposals_cant_parse)
+            }
+
+        }
+
     }
 
 }
@@ -407,8 +461,52 @@ impl DBReadBlock for DB {
         let file_location: String = format!("{}",BLOCKS_DB_LOC);
         //let mut file = fs::File::create(file_location.to_string())?;
         //file.write( proposal_string.as_bytes() )?;
-        Self::write(db_json_string, file_location);
-        Ok(String::from("Ok, Successfully wrote DB JSON index FOR BLOCK"))
+        //Self::write(db_json_string, file_location);
+        //Ok(String::from("Ok, Successfully wrote DB JSON index FOR BLOCK"))
+
+
+        //TODO: purge block index
+        let maximum_length: i32 = 10;
+
+        // parse the db_json_string
+        let parsed = json::parse( &format!(r#"{}"#, db_json_string) );
+        match parsed {
+
+            Ok(mut block_index) => {
+                if block_index.clone().has_key("blocks") {
+                    println!("DB, write_block_index, number_of_blocks: block index has blocks key");
+                    //let parsed_result: JsonValue = block_index.clone();
+                    let number_of_blocks: i32 = block_index.clone()["blocks"].len() as i32;
+                    if number_of_blocks > maximum_length {
+                        println!("DB, write_block_index, number_of_proposals: number_of_proposals IS GREATER THAN maximum_length");
+                        // remove length - window
+                        let block_to_delete: i32 = (number_of_blocks - maximum_length) - 1;
+                        &block_index["blocks"].remove(&format!("{}",block_to_delete));
+                        &block_index["blocks"].remove(&format!("{}",block_to_delete+1));
+                        &block_index["blocks"].remove(&format!("{}",block_to_delete+2));
+                        &block_index["blocks"].remove(&format!("{}",block_to_delete+3));
+                        //block_index["blocks"] = parsed_result.clone();
+                        Self::write(block_index.dump(), file_location);
+                        return Ok(String::from("Ok, Successfully wrote DB JSON block index, over max window"))
+                    } else {
+                        println!("DB, write_block_index, number_of_blocks: number_of_blocks IS NOT GREATER THAN maximum_length");
+                        Self::write(block_index.dump(), file_location);
+                        return Ok(String::from("Ok, Successfully wrote DB JSON block index, NOT over max window"))
+                    }
+                } else {
+                    println!("DB, write_block_index, number_of_blocks: number_of_blocks IS GREATER THAN maximum_length");
+                    let db_proposals_key_is_missing_error = Error::new(ErrorKind::Other, "DBWrite ERROR, write_block_index, blocks key did not exists in block index!!!");
+                    Err(db_proposals_key_is_missing_error)
+                }
+            },
+            Err(_) => {
+                let db_blocks_cant_parse = Error::new(ErrorKind::Other, "DBWrite ERROR, write_blocks_index, cant parse block index!!!");
+                Err(db_blocks_cant_parse)
+            }
+
+        }
+
+
     }
 
     fn read_block(block_id: i64) -> Option<String> {

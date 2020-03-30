@@ -226,7 +226,7 @@ impl StateTransition for Node {
             }
         };
 
-        let delay: u32 = 10000; //10000
+        let delay: u32 = 5000; //10000
         match proposals {
             Ok(p) => {
                 // PROBLEM: AT THE END OF THIS, REFRESH JSON
@@ -251,7 +251,8 @@ impl StateTransition for Node {
                                             let current_block_by_id_option: Option<Block> = DB::get_block_by_block_id(local_block_id);
                                             match current_block_by_id_option {
                                                 Some(current_block_by_id) => {
-                                                    let proposal_window: i64 = current_block_by_id.block_id - 5;
+                                                    let block_window_length: i64 = 5;
+                                                    let proposal_window: i64 = current_block_by_id.block_id - block_window_length;
                                                     if proposal.proposal_block.block_id > proposal_window {
                                                         //TODO: Condition on proposal's block_id, here we can limit how many proposals
                                                         self.determine_transition_step(proposal.clone(), proposal_index);
@@ -335,6 +336,7 @@ impl StateTransition for Node {
         //upon broadcast success, change to "submitted"
         //TODO: broadcast with Vec<String> of peer locations
         //Network::broadcast_proposal_created(Proposal, self.peers_to_string);
+        //TODO: prune proposal index
     }
 
     fn determine_transition_step(&mut self, proposal: Proposal, proposal_index: JsonValue) -> (){
@@ -420,6 +422,19 @@ impl StateTransition for Node {
                                             }
                                         }
 
+                                        // lets rebroadcast
+                                        for peer in self.peers.clone().peer_set {
+                                            //TODO: decide who we should broadcast to
+                                            if Server::broadcast_proposal_created(proposal.clone(),
+                                                                                  peer.clone().location,
+                                                                                  node_ip.clone()).is_ok() {
+                                                println!("[determine_transition_step, peer does not exist], broadcast_proposal_created SUCCESS...");
+                                            } else {
+                                                println!("[determine_transition_step, peer does not exist], broadcast_proposal_created FAILED...");
+                                            }
+                                        }
+
+
                                     } else {
                                         println!("[determine_transition_step], CREATED, PEER KEY DOESN'T EXIST");
                                         // TODO: could be we just have to wait for the other person
@@ -439,6 +454,7 @@ impl StateTransition for Node {
                                         }
 
                                     }
+
                                 },
                                 None => {
 
