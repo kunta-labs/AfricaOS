@@ -257,6 +257,7 @@ impl DBReadProposal for DB {
                         // remove length - window. Minus for genesis
                         let proposal_to_delete: i32 = (number_of_proposals - maximum_length) - 1;
                         //remove the proposal_id key
+                        // TODO: iterate for fixed length
                         &proposal_index["proposals"].remove( &format!("{}",proposal_to_delete) );
                         &proposal_index["proposals"].remove( &format!("{}",proposal_to_delete+1) );
                         &proposal_index["proposals"].remove( &format!("{}",proposal_to_delete+2) );
@@ -474,6 +475,7 @@ impl DBReadBlock for DB {
                         println!("DB, write_block_index, number_of_proposals: number_of_proposals IS GREATER THAN maximum_length");
                         // remove length - window
                         let block_to_delete: i32 = (number_of_blocks - maximum_length) - 1;
+                        // TODO: iterate for fixed length
                         &block_index["blocks"].remove(&format!("{}",block_to_delete));
                         &block_index["blocks"].remove(&format!("{}",block_to_delete+1));
                         &block_index["blocks"].remove(&format!("{}",block_to_delete+2));
