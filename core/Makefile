@@ -52,7 +52,7 @@ create_directories:
 build:
 	cargo build --verbose;
 save:
-	git add * ; git commit -am "saved from core" ; git push origin master:development -v
+	git add * ; git commit -am ${M} -v  ; git push origin master:development -v
 get:
 	git fetch ; git pull origin master;
 rms:

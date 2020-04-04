@@ -991,7 +991,7 @@ impl ProposalValidator for Proposal {
                     let current_block_id: Option<i64> = Block::get_next_block_id();
 
                     let current_block_id_result: i64 = match current_block_id {
-                        Some(block_id) => {
+                        Some(block_id) => { 
                             println!("validate_proposal(), current_block_id, block_id: {}", block_id);
                             // was just block_id, but substracting one since calling current_block_id
                             // block_id

@@ -251,21 +251,39 @@ impl DBReadProposal for DB {
                     let number_of_proposals: i32 = proposal_index.clone()["proposals"].len() as i32;
                     println!("DB, write_proposal_index, number_of_proposals: {}", number_of_proposals);
 
+
                     //check length of proposal index
                     if number_of_proposals > maximum_length {
-                        println!("DB, write_proposal_index, number_of_proposals: number_of_proposals IS GREATER THAN maximum_length");
-                        // remove length - window. Minus for genesis
-                        let proposal_to_delete: i32 = (number_of_proposals - maximum_length) - 1;
-                        //remove the proposal_id key
-                        // TODO: iterate for fixed length
-                        &proposal_index["proposals"].remove( &format!("{}",proposal_to_delete) );
-                        &proposal_index["proposals"].remove( &format!("{}",proposal_to_delete+1) );
-                        &proposal_index["proposals"].remove( &format!("{}",proposal_to_delete+2) );
-                        &proposal_index["proposals"].remove( &format!("{}",proposal_to_delete+3) );
-                        //proposal_index["proposals"] = parsed_result.clone();
-                        //Self::write(proposal_index.dump(), file_location);
+                        println!("DB, write_proposal_index, number_of_proposals IS GREATER THAN maximum_length");
+                        
+                        // TODO: remove all keys lower than threshold
+                        let proposals_iter = &proposal_index.clone()["proposals"];
+                        // recent proposal
+                        let last_proposal_option = proposals_iter.entries().last().clone();
+                        match last_proposal_option {
+                            Some(last_proposal) => {
+                                let last_proposal_json = last_proposal.1;
+
+                                for (id, proposal) in proposals_iter.clone().entries() {
+                                    // TODO: finish error handling on proposal_id parse into i32
+                                    if id.parse::<i32>().unwrap() < (last_proposal_json["proposal_id"].as_i32().unwrap() - maximum_length) {
+
+                                        &proposal_index["proposals"].remove( &format!("{}", id) );
+
+                                    } else {/*do nothing*/}
+                                }
+
+                            },
+                            None => {
+                                let db_proposals_no_last_proposal_error = Error::new(ErrorKind::Other, "DBWrite ERROR, write_proposal_index, last proposal return none...?");
+                                return Err(db_proposals_no_last_proposal_error)
+                            }
+                        }
+
                         Self::write(proposal_index.dump(), file_location);
                         return Ok(String::from("Ok, Successfully wrote DB JSON proposal index, over max window"))
+
+
                     } else {
                         println!("DB, write_proposal_index, number_of_proposals: number_of_proposals IS NOT GREATER THAN maximum_length");
                         Self::write(proposal_index.dump(), file_location);
@@ -460,7 +478,7 @@ impl DBReadBlock for DB {
         let file_location: String = format!("{}",BLOCKS_DB_LOC);
 
         //TODO: purge block index
-        let maximum_length: i32 = 10;
+        let maximum_length: i64 = 10;
 
         // parse the db_json_string
         let parsed = json::parse( &format!(r#"{}"#, db_json_string) );
@@ -470,19 +488,36 @@ impl DBReadBlock for DB {
                 if block_index.clone().has_key("blocks") {
                     println!("DB, write_block_index, number_of_blocks: block index has blocks key");
                     //let parsed_result: JsonValue = block_index.clone();
-                    let number_of_blocks: i32 = block_index.clone()["blocks"].len() as i32;
+                    let number_of_blocks: i64 = block_index.clone()["blocks"].len() as i64;
                     if number_of_blocks > maximum_length {
-                        println!("DB, write_block_index, number_of_proposals: number_of_proposals IS GREATER THAN maximum_length");
-                        // remove length - window
-                        let block_to_delete: i32 = (number_of_blocks - maximum_length) - 1;
-                        // TODO: iterate for fixed length
-                        &block_index["blocks"].remove(&format!("{}",block_to_delete));
-                        &block_index["blocks"].remove(&format!("{}",block_to_delete+1));
-                        &block_index["blocks"].remove(&format!("{}",block_to_delete+2));
-                        &block_index["blocks"].remove(&format!("{}",block_to_delete+3));
-                        //block_index["blocks"] = parsed_result.clone();
+                        println!("DB, write_block_index, number_of_blocks: number_of_blocks IS GREATER THAN maximum_length");
+
+                        let blocks_iter = &block_index.clone()["blocks"];
+                        // recent block
+                        let last_block_option = blocks_iter.entries().last().clone();
+                        match last_block_option {
+                            Some(last_block) => {
+                                let last_block_json = last_block.1;
+
+                                for (id, block) in blocks_iter.clone().entries() {
+                                    // TODO: finish error handling on block_id parse into i64
+                                    if id.parse::<i64>().unwrap() < (last_block_json["block_id"].as_i64().unwrap() - maximum_length)  {
+
+                                        &block_index["blocks"].remove( &format!("{}", id) );
+
+                                    } else {/*do nothing*/}
+                                }
+
+                            },
+                            None => {
+                                let db_blocks_no_last_block_error = Error::new(ErrorKind::Other, "DBWrite ERROR, write_block_index, last block return none...?");
+                                return Err(db_blocks_no_last_block_error)
+                            }
+                        }
+
                         Self::write(block_index.dump(), file_location);
                         return Ok(String::from("Ok, Successfully wrote DB JSON block index, over max window"))
+
                     } else {
                         println!("DB, write_block_index, number_of_blocks: number_of_blocks IS NOT GREATER THAN maximum_length");
                         Self::write(block_index.dump(), file_location);
@@ -490,8 +525,8 @@ impl DBReadBlock for DB {
                     }
                 } else {
                     println!("DB, write_block_index, number_of_blocks: number_of_blocks IS GREATER THAN maximum_length");
-                    let db_proposals_key_is_missing_error = Error::new(ErrorKind::Other, "DBWrite ERROR, write_block_index, blocks key did not exists in block index!!!");
-                    Err(db_proposals_key_is_missing_error)
+                    let db_blocks_key_is_missing_error = Error::new(ErrorKind::Other, "DBWrite ERROR, write_block_index, blocks key did not exists in block index!!!");
+                    Err(db_blocks_key_is_missing_error)
                 }
             },
             Err(_) => {

@@ -226,7 +226,8 @@ impl StateTransition for Node {
             }
         };
 
-        let delay: u32 = 5000; //10000
+        let delay_proposal_iteration: u32 = 5000; //10000
+        let delay_proposal_creation: u32 = 60000; //10000
         match proposals {
             Ok(p) => {
                 // PROBLEM: AT THE END OF THIS, REFRESH JSON
@@ -257,7 +258,7 @@ impl StateTransition for Node {
                                                         //TODO: Condition on proposal's block_id, here we can limit how many proposals
                                                         self.determine_transition_step(proposal.clone(), proposal_index);
                                                         //delay to allow buffer?
-                                                        thread::sleep_ms(delay);
+                                                        thread::sleep_ms(delay_proposal_iteration);
                                                     }
                                                     else {
                                                         // DO NOT TRANSITION on proposals from a "lomg time ago"
@@ -268,7 +269,7 @@ impl StateTransition for Node {
                                                     if local_block_id == -1 {
                                                         self.determine_transition_step(proposal.clone(), proposal_index);
                                                         //delay to allow buffer?
-                                                        thread::sleep_ms(delay);
+                                                        thread::sleep_ms(delay_proposal_iteration);
                                                     } else {}
                                                 }
                                             }
@@ -310,7 +311,7 @@ impl StateTransition for Node {
                                 let calculated_proposal_creator_id: i32 = Proposal::calculate_next_proposal_creator_id(self.peers.peer_set.len(), block_id) as i32;
                                 println!("calculated_proposal_creator_id: {} latest block_id: {}", calculated_proposal_creator_id, block_id);
                                 if calculated_proposal_creator_id == self.node_id {
-                                    thread::sleep_ms(delay);
+                                    thread::sleep_ms(delay_proposal_creation);
                                     Proposal::create( self.clone().ip );
                                 } else {
 
