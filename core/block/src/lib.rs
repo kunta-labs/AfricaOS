@@ -121,52 +121,8 @@ impl ReadBlockFromDB for DB {
     /*
     @name get_latest_block_id
     @desc get the block id
-    */
-    // fn get_latest_block_id() -> Option<i64> {
-    //     let block_index_parsed_option: Option<JsonValue> = Self::get_block_index_as_json();
-    //
-    //     match block_index_parsed_option {
-    //         Some(block_index_parsed) => {
-    //             let all_blocks = &block_index_parsed["blocks"];
-    //
-    //             if all_blocks.is_empty() {
-    //                 //None
-    //                 Some(-1)
-    //             } else {
-    //                 let mut highest_block_id: i64 = -1;
-    //                 // // iterate over each proposal entry
-    //                 let blocks_iter = all_blocks.entries();
-    //                 for (id, block_iter) in blocks_iter {
-    //
-    //                     println!("get_latest_block_id(), block: iter {}:{}", id, block_iter);
-    //                     let block_from_json: Result<Block, String> = Block::from_json( (*block_iter).clone() );
-    //                     match block_from_json {
-    //                         Ok(block) => {
-    //                             if block.block_id > highest_block_id {
-    //                                 highest_block_id = block.block_id;
-    //                             } else {
-    //                                 println!("get_latest_block_id(), block id not higher than highest_block_id: {}", block.block_id);
-    //                             }
-    //                         },
-    //                         Err(_) => {
-    //                             println!("Couldn't convert JSON block to Block type");
-    //                         }
-    //                     }
-    //                 }
-    //                 ///////////////////////////////
-    //                 Some(highest_block_id)
-    //             }
-    //         },
-    //         None => None
-    //     }
-    //
-    //
-    // }
-
-    /*
-    @name get_latest_block_id
-    @desc get the block id
     @fix - without the loop
+    @problem references length of block index
     */
     fn get_latest_block_id() -> Option<i64> {
         let block_index_parsed_option: Option<JsonValue> = Self::get_block_index_as_json();
@@ -179,10 +135,18 @@ impl ReadBlockFromDB for DB {
                     //None
                     Some(-1)
                 } else {
-                    // if the length is 1, that means the next block number should be 1
-                    // if the length is 2, that means the next block number should be 2
-                    let mut amount_of_blocks: i64 = all_blocks.len() as i64;
-                    Some(amount_of_blocks - 1)
+                    // TODO: dont calculate number of blocks by length in block index
+                    //let mut amount_of_blocks: i64 = all_blocks.len() as i64;
+                    match Block::get_next_block_id() {
+                        Some(block_id) => {
+                            println!("get_latest_block_id, Block::get_next_block_id() is SOME");
+                            Some(block_id)
+                        },
+                        None => {
+                            println!("get_latest_block_id, Block::get_next_block_id() is NONE");
+                            Some(-1) // return -1 for default, could be error
+                        }
+                    }
                 }
             },
             None => None
@@ -190,6 +154,7 @@ impl ReadBlockFromDB for DB {
 
 
     }
+
 
     /*
     @name get_all_proposals
@@ -245,6 +210,78 @@ impl ReadBlockFromDB for DB {
         }
     }
 
+}
+
+
+/*
+@name BlockIDGenerator
+@desc trait for generating a next block_id
+@fix fixes get_latest_block_id problem of counting length of block index, this counts files
+*/
+pub trait BlockIDGenerator {
+    fn parse_filename_for_block_id(filename: &str) -> Option<i64>;
+    fn get_next_block_id() -> Option<i64>;
+}
+
+impl BlockIDGenerator for Block {
+    /*
+    @name parse_filename_for_block_id
+    @desc parse a i64 from a string block filename
+    */
+    fn parse_filename_for_block_id(filename: &str) -> Option<i64> {
+        let filename_block_id:Vec<&str> = filename.split("_").collect::<Vec<_>>();
+        match filename_block_id[0] {
+            "block" => {
+                if filename_block_id.len() == 2 {
+                    let block_filename_section: &str = filename_block_id[1];
+                    let last_split_section: Vec<&str> = block_filename_section.split(".").collect::<Vec<_>>();
+                    let filename_block_id: i64 = last_split_section[0].parse::<i64>().unwrap();
+                    println!("last_split_section: {}", filename_block_id);
+                    Some(filename_block_id)
+                }else{
+                    println!("no block_id in filename, block Filename length is != 2: {}", filename_block_id.len());
+                    None
+                }
+            },
+            _ => None
+        }
+    }
+
+    /*
+    @name get_next_block_id
+    @desc generate the next block_id from all blocks on disk
+    */
+    fn get_next_block_id() -> Option<i64> {
+        //read all directories
+        let files:Vec<String> = DB::read_blocks_directory();
+        let mut iter = (&files).into_iter();
+        let mut highest_block_index: i64 = -1;
+        //iterate over all proposal files
+        while let Some(v) = iter.next(){
+            println!("Filename Iter: {}", v);
+            //parse file name for proposal id
+            let filename_split_vector = v.split("/").collect::<Vec<_>>();
+            let last_split_section: &str = filename_split_vector[filename_split_vector.len() - 1];
+            let parsed_block_id: Option<i64> = Self::parse_filename_for_block_id(last_split_section);
+            //TODO: parse to a block type, and check status
+            // should not count a none commited block in the highest_block_id calculation
+            match parsed_block_id {
+                Some(bid) => {
+                    //Could keep this in memory globally?
+                    if bid > highest_block_index {
+                        highest_block_index = bid;
+                    }
+                },
+                None => ()
+            }
+        }
+        println!("highest_block_index: {}", highest_block_index);
+        match highest_block_index {
+            -1 => None,
+            _ => Some(highest_block_index),
+
+        }
+    }
 }
 
 
