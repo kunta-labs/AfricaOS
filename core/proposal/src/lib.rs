@@ -498,7 +498,11 @@ impl ReadProposalFromDB for DB {
         let proposal_index_option: Option<JsonValue> = Self::get_proposal_index_as_json();
         match proposal_index_option {
             Some(proposal_index) => {
-                let next_proposal_id_option: Option<i32> = Proposal::get_next_proposal_id();
+
+                //TODO: invoke get_next_proposal_id_from_index() instead
+                //let next_proposal_id_option: Option<i32> = Proposal::get_next_proposal_id();
+                let next_proposal_id_option: Option<i32> = Proposal::get_next_proposal_id_from_index();
+
                 match next_proposal_id_option {
                     Some(next_proposal_id) => {
                         let mut all_proposals_vector: Vec<Proposal> = Vec::new();
@@ -778,7 +782,9 @@ impl NewProposal for Proposal {
     fn create(request_origin: String) -> Option<Proposal> {
         println!("Creating New Proposal...");
         //TODO: determine proposal ID
-        let new_proposal_id:i32 = match Self::get_next_proposal_id(){
+        //TODO: invoke get_next_proposal_id_from_index() instead
+        //let new_proposal_id:i32 = match Self::get_next_proposal_id(){
+        let new_proposal_id:i32 = match Self::get_next_proposal_id_from_index(){
             Some(pid) => pid,
             None => -1
         };
@@ -826,6 +832,7 @@ impl NewProposal for Proposal {
 trait ProposalIDGenerator {
     fn parse_filename_for_proposal_id(filename: &str) -> Option<i32>;
     fn get_next_proposal_id() -> Option<i32>;
+    fn get_next_proposal_id_from_index() -> Option<i32>;
 }
 
 impl ProposalIDGenerator for Proposal {
@@ -855,6 +862,7 @@ impl ProposalIDGenerator for Proposal {
     /*
     @name get_next_proposal_id
     @desc generate the next proposal_id from all proposals on disk
+    @deprecated due to counting files, instead of accessing index
     */
     fn get_next_proposal_id() -> Option<i32> {
         //read all directories
@@ -863,7 +871,7 @@ impl ProposalIDGenerator for Proposal {
         let mut highest_proposal_index: i32 = -1;
         //iterate over all proposal files
         while let Some(v) = iter.next(){
-            println!("Filename Iter: {}", v);
+            //println!("Filename Iter: {}", v);
             //parse file name for proposal id
             let filename_split_vector = v.split("/").collect::<Vec<_>>();
             let last_split_section: &str = filename_split_vector[filename_split_vector.len() - 1];
@@ -886,6 +894,36 @@ impl ProposalIDGenerator for Proposal {
             _ => Some(highest_proposal_index),
 
         }
+    }
+
+    /*
+    @name get_next_proposal_id_from_index
+    @desc determine next proposal id from index
+    */
+    fn get_next_proposal_id_from_index() -> Option<i32> {
+        let parsed_option: Option<JsonValue> = DB::get_proposal_index_as_json();
+        match parsed_option {
+            Some(mut proposal_index) => {
+
+                let proposals_iter = &proposal_index.clone()["proposals"];
+                let last_proposal_option = proposals_iter.entries().last().clone();
+                match last_proposal_option {
+                    Some(last_proposal) => {
+                        let last_proposal_json = last_proposal.1;
+
+                        // TODO: error handling
+                        Some(last_proposal_json["proposal_id"].as_i32().unwrap())
+
+                    },
+                    None => {
+                        None
+                    }
+                }
+
+            },
+            None => None
+        }
+
     }
 }
 
@@ -988,10 +1026,12 @@ impl ProposalValidator for Proposal {
                     //let current_block_id: Option<i64> = Block::get_latest_block_id();
 
                     //TODO: this is better than get_latest_block_id, since this counds block files instead of index length
-                    let current_block_id: Option<i64> = Block::get_next_block_id();
+                    //TODO: invoke get_next_block_id_from_index() instead
+                    //let current_block_id: Option<i64> = Block::get_next_block_id();
+                    let current_block_id: Option<i64> = Block::get_next_block_id_from_index();
 
                     let current_block_id_result: i64 = match current_block_id {
-                        Some(block_id) => { 
+                        Some(block_id) => {
                             println!("validate_proposal(), current_block_id, block_id: {}", block_id);
                             // was just block_id, but substracting one since calling current_block_id
                             // block_id
