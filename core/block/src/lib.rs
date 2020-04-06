@@ -137,9 +137,11 @@ impl ReadBlockFromDB for DB {
                 } else {
                     // TODO: dont calculate number of blocks by length in block index
                     //let mut amount_of_blocks: i64 = all_blocks.len() as i64;
-                    match Block::get_next_block_id() {
+                    //TODO: invoke get_next_block_id_from_index() instead
+                    //match Block::get_next_block_id() {
+                    match Block::get_next_block_id_from_index() {
                         Some(block_id) => {
-                            println!("get_latest_block_id, Block::get_next_block_id() is SOME");
+                            println!("get_latest_block_id, Block::get_next_block_id(), get_next_block_id_from_index() is SOME");
                             Some(block_id)
                         },
                         None => {
@@ -221,6 +223,7 @@ impl ReadBlockFromDB for DB {
 pub trait BlockIDGenerator {
     fn parse_filename_for_block_id(filename: &str) -> Option<i64>;
     fn get_next_block_id() -> Option<i64>;
+    fn get_next_block_id_from_index() -> Option<i64>;
 }
 
 impl BlockIDGenerator for Block {
@@ -250,6 +253,7 @@ impl BlockIDGenerator for Block {
     /*
     @name get_next_block_id
     @desc generate the next block_id from all blocks on disk
+    @deprecated due to counting files, instead of accessing index
     */
     fn get_next_block_id() -> Option<i64> {
         //read all directories
@@ -258,7 +262,7 @@ impl BlockIDGenerator for Block {
         let mut highest_block_index: i64 = -1;
         //iterate over all proposal files
         while let Some(v) = iter.next(){
-            println!("Filename Iter: {}", v);
+            //println!("Filename Iter: {}", v);
             //parse file name for proposal id
             let filename_split_vector = v.split("/").collect::<Vec<_>>();
             let last_split_section: &str = filename_split_vector[filename_split_vector.len() - 1];
@@ -280,6 +284,35 @@ impl BlockIDGenerator for Block {
             -1 => None,
             _ => Some(highest_block_index),
 
+        }
+    }
+
+    /*
+    @name get_next_block_id_from_index
+    @desc generate next block id from index
+    */
+    fn get_next_block_id_from_index() -> Option<i64> {
+        let parsed_option: Option<JsonValue> = DB::get_block_index_as_json();
+        match parsed_option {
+            Some(mut block_index) => {
+
+                let blocks_iter = &block_index.clone()["blocks"];
+                let last_block_option = blocks_iter.entries().last().clone();
+                match last_block_option {
+                    Some(last_block) => {
+                        let last_block_json = last_block.1;
+
+                        // TODO: error handling
+                        Some(last_block_json["block_id"].as_i64().unwrap())
+
+                    },
+                    None => {
+                        None
+                    }
+                }
+
+            },
+            None => None
         }
     }
 }
