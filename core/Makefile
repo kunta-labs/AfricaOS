@@ -121,13 +121,13 @@ dbb:
 dbc:
 	time docker build --force-rm --rm --network="host" --file "./DockerfileCici" --build-arg nodeType=cici -t cici_node .
 rac: # run all containers
-	docker run -d -p 8081:8081 kuntalabs/africaos:latest ./core node-name="alices node" node-id=1 port=8081 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8081
-	docker run -d -p 8082:8082 kuntalabs/africaos:latest ./core node-name="bob's node" node-id=2 port=8082 peers=docker.for.mac.host.internal:8081,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8082
-	docker run -d -p 8083:8083 kuntalabs/africaos:latest ./core node-name="cici's node" node-id=3 port=8083 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8081 ip=docker.for.mac.host.internal:8083
+	docker run --log-opt max-size=10m -d -p 8081:8081 kuntalabs/africaos:latest ./core node-name="alices node" node-id=1 port=8081 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8081
+	docker run --log-opt max-size=10m -d -p 8082:8082 kuntalabs/africaos:latest ./core node-name="bob's node" node-id=2 port=8082 peers=docker.for.mac.host.internal:8081,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8082
+	docker run --log-opt max-size=10m -d -p 8083:8083 kuntalabs/africaos:latest ./core node-name="cici's node" node-id=3 port=8083 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8081 ip=docker.for.mac.host.internal:8083
 racl: # run all containers local
-	docker run -d -p 8081:8081 aos:latest ./core node-name="alices node" node-id=1 port=8081 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8081
-	docker run -d -p 8082:8082 aos:latest ./core node-name="bob's node" node-id=2 port=8082 peers=docker.for.mac.host.internal:8081,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8082
-	docker run -d -p 8083:8083 aos:latest ./core node-name="cici's node" node-id=3 port=8083 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8081 ip=docker.for.mac.host.internal:8083
+	docker run --log-opt max-size=5m --log-opt max-file=10 -d -p 8081:8081 aos:latest ./core node-name="alices node" node-id=1 port=8081 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8081
+	docker run --log-opt max-size=5m --log-opt max-file=10 -d -p 8082:8082 aos:latest ./core node-name="bob's node" node-id=2 port=8082 peers=docker.for.mac.host.internal:8081,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8082
+	docker run --log-opt max-size=5m --log-opt max-file=10 -d -p 8083:8083 aos:latest ./core node-name="cici's node" node-id=3 port=8083 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8081 ip=docker.for.mac.host.internal:8083
 stress_aws:
 	while true; do make stress_a_aws; sleep 60 ; make stress_b_aws; sleep 60 ; make stress_c_aws; sleep 60 ; done
 stress_a_aws:
@@ -137,6 +137,6 @@ stress_b_aws:
 stress_c_aws:
 	curl -d 'TESTSTRING' --header "Origin: ${CICI}:8083" --header "User-Agent: 100,200,test_string" ${CICI}:8083/transaction/submit/output ;
 aws_docker_commands:
-	echo "docker run -d -p 8081:8081 kuntalabs/africaos:latest ./core node-name='alices node' node-id=1 port=8081 peers=${BOB}:8082,${CICI}:8083 ip=${ALICE}:8081"
-	echo "docker run -d -p 8082:8082 kuntalabs/africaos:latest ./core node-name='bobs node' node-id=2 port=8082 peers=${ALICE}:8081,${CICI}:8083 ip=${BOB}:8082"
-	echo "docker run -d -p 8083:8083 kuntalabs/africaos:latest ./core node-name='cicis node' node-id=3 port=8083 peers=${BOB}:8082, ${ALICE}:8081 ip=${CICI}:8083"
+	echo "docker run --log-opt max-size=5m --log-opt max-file=10 -d -p 8081:8081 kuntalabs/africaos:latest ./core node-name='alices node' node-id=1 port=8081 peers=${BOB}:8082,${CICI}:8083 ip=${ALICE}:8081"
+	echo "docker run --log-opt max-size=5m --log-opt max-file=10 -d -p 8082:8082 kuntalabs/africaos:latest ./core node-name='bobs node' node-id=2 port=8082 peers=${ALICE}:8081,${CICI}:8083 ip=${BOB}:8082"
+	echo "docker run --log-opt max-size=5m --log-opt max-file=10 -d -p 8083:8083 kuntalabs/africaos:latest ./core node-name='cicis node' node-id=3 port=8083 peers=${BOB}:8082,${ALICE}:8081 ip=${CICI}:8083"
