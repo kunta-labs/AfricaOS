@@ -76,11 +76,11 @@ impl PayloadParser for Server {
             let mut header_data: &str = string_to_trunc.trim();
             let final_header_data: String = String::from(header_data);
             Ok(final_header_data)
-        } else if header_sections.len() == 3 {
+        } else if header_sections.len() == 3 || header_sections.len() == 4 { // TODO: remove = 4
             let data_second_element: &str = header_sections[1];
             let data_third_element: &str = header_sections[2];
             let string_to_trunc: String = format!("{}:{}", data_second_element, data_third_element);
-            println!("Data SECOND AND THIRD ELEMENT: {}", string_to_trunc);
+            println!("Data SECOND AND THIRD ELEMENT (AT MOST 4): {}", string_to_trunc);
             let mut header_data: &str = string_to_trunc.trim();
             let final_header_data: String = String::from(header_data);
             Ok(final_header_data)
@@ -460,6 +460,7 @@ impl Receiver for Server {
                 let query: &str = Self::get_query_from_payload(split_payload_for_query);
                 println!("handle_read, Query: {}", query);
                 let split_payload_for_data: Vec<&str> = req_str.split("\n").collect();
+                //TODO: SET CUSTOM HEADERS
                 let data: Result<String, String> = Self::get_header_from_payload(split_payload_for_data.clone(), "user-agent");
                 //TODO: state which header to return
                 if data.is_ok() {
@@ -500,14 +501,20 @@ impl Receiver for Server {
     fn handle_write(mut stream: TcpStream, result: String) -> Result<String, String> {
 
         //TODO: set CONTENT-LENGTH dynamically
-        let response_result = format!( "HTTP/1.1 200 OK
-                                       \r\nContent-Length: 1000
-                                       \r\nContent-Type: application/json; charset=UTF-8
-                                       \r\n\r\n{}
-                                       \r\n", result );
-        //a.iter().cloned().collect();
-        //let c = &a[..]; // c: &[u8]
+        //TODO: fix header
 
+        // let response_result = format!( "HTTP/1.1 200 OK
+        //                                \r\nContent-Length: 1000
+        //                                \r\nContent-Type: application/json; charset=UTF-8
+        //                                \r\n\r\n{}
+        //                                \r\n", result );
+
+        let response_result = format!( "HTTP/1.1 200 OK
+                                       \r\nContent-Length: {}
+                                       \r\n\r\n{}
+                                       \r\n", result.chars().count(), result );
+
+    
         let response_string: String = String::from(response_result);
 
         //TODO: WRITE BACK THE RESULT PASSED
@@ -515,10 +522,12 @@ impl Receiver for Server {
         match stream.write(response_string.as_bytes()) {
             Ok(_) => {
                 println!("handle_write, Stream Write Success");
+                stream.flush().unwrap();
                 Ok(String::from("Response Sent"))
             },
             Err(e) => {
                 println!("handle_write, Stream Write FAILURE: {}", e);
+                stream.flush().unwrap();
                 Ok(String::from("Response error"))
             },
         }
@@ -622,7 +631,7 @@ impl API for Server {
             @endpoint /transaction/submit/output/
             @desc for an external submission of a transaction
             */
-            "/transaction/submit/output" => {
+            "/transaction/submit/output/" => {
                 println!("Transaction Submit: {}, {}, {}", command, data, request_origin);
                 let new_transaction: Option<Transaction> = Transaction::new_output(request_origin.clone(), String::from(data.clone()) );
                 match new_transaction {

@@ -18,12 +18,6 @@ extern crate json;
 
 use json::{JsonValue};
 
-macro_rules! transaction_input_logic {
-    () => {
-
-    }
-}
-
 macro_rules! block_validation {
     () => {
     }
@@ -34,6 +28,10 @@ macro_rules! proposal_validation {
     }
 }
 
+/*
+@name proposal_creator_election
+@description
+*/
 #[macro_export]
 macro_rules! proposal_creator_election {
     // TODO: place PCE code in here
@@ -44,7 +42,20 @@ macro_rules! proposal_creator_election {
     }
 }
 
-// @input
+/*
+@name transaction_input_logic
+@description
+*/
+macro_rules! transaction_input_logic {
+    () => {
+
+    }
+}
+
+/*
+@name transaction_output_logic
+@description
+*/
 #[macro_export]
 macro_rules! transaction_output_logic {
     /*
@@ -84,18 +95,35 @@ mod tests {
 
     #[test]
     fn test_transaction_output_logic() -> (){
-        let test_json: JsonValue = object!{
+        let test_state_json: JsonValue = object!{
             "test" => "test"
         };
 
         let test_json_2: JsonValue = object!{
             "test" => "test",
-            "test2" => "test2"
+            "HASHTEST" => "100,200,test_string"
         };
-        let test_string: String = String::from("test2");
-        let result: JsonValue = transaction_output_logic!( test_json.clone(),
-                                                           test_string,
-                                                           test_string );
+        let test_hash_string: String = String::from("HASHTEST");
+        let test_tx_data_string: String = String::from("100,200,test_string");
+        let result: JsonValue = transaction_output_logic!( test_state_json.clone(),
+                                                           test_hash_string,
+                                                           test_tx_data_string );
         assert_eq!(test_json_2, result);
+    }
+
+    #[test]
+    fn test_transaction_input_logic() -> (){
+        let test_state_json: JsonValue = object!{
+            "test" => "test"
+        };
+
+        let test_json_2: JsonValue = object!{
+            "test" => "test",
+            "HASHTEST" => "100,200,test_string"
+        };
+        let test_hash_string: String = String::from("HASHTEST");
+        let test_tx_data_string: String = String::from("100,200,test_string");
+
+        
     }
 }
