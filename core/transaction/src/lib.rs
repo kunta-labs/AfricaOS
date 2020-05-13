@@ -38,7 +38,7 @@ pub struct Transaction {
     pub transaction_timestamp: Timestamp,
     pub transaction_type: TransactionType,
     pub transaction_sender: String,
-    pub transaction_recipient: String,
+    //pub transaction_recipient: String,
     pub transaction_data: String,
     pub transaction_hash: String
 }
@@ -136,7 +136,7 @@ impl JsonConverter for Transaction {
             "transaction_timestamp" => transaction.transaction_timestamp.timestamp,
             "transaction_type" => Self::type_to_string(transaction.transaction_type),
             "transaction_sender" => transaction.transaction_sender,
-            "transaction_recipient" => transaction.transaction_recipient,
+            //"transaction_recipient" => transaction.transaction_recipient,
             "transaction_data" => transaction.transaction_data,
             "transaction_hash" => transaction.transaction_hash
         };
@@ -156,7 +156,7 @@ impl JsonConverter for Transaction {
                         transaction_timestamp: ts,
                         transaction_type: Transaction::string_to_type( payload["transaction_type"].as_str().unwrap() ),
                         transaction_sender: payload["transaction_sender"].to_string(),
-                        transaction_recipient: payload["transaction_recipient"].to_string(),
+                        //transaction_recipient: payload["transaction_recipient"].to_string(),
                         transaction_data: payload["transaction_data"].to_string(),
                         transaction_hash: payload["transaction_hash"].to_string()
                     };
@@ -370,7 +370,7 @@ impl WriteTransactionToDB for DB {
             "transaction_timestamp" => transaction.transaction_timestamp.timestamp,
             "transaction_type" => Transaction::type_to_string( transaction.transaction_type ),
             "transaction_sender" => transaction.transaction_sender,
-            "transaction_recipient" => transaction.transaction_recipient,
+            //"transaction_recipient" => transaction.transaction_recipient,
             "transaction_data" => transaction.transaction_data,
             "transaction_hash" => transaction.transaction_hash
         };
@@ -564,7 +564,7 @@ impl CreateNewOuputTransaction for Transaction {
                     transaction_timestamp: new_timestamp,
                     transaction_type: TransactionType::Output,
                     transaction_sender: sender.clone(),
-                    transaction_recipient: sender,
+                    //transaction_recipient: sender,
                     transaction_data: data,
                     transaction_hash: new_transaction_hash
                 };
@@ -691,7 +691,7 @@ mod tests {
             transaction_timestamp: new_timestamp,
             transaction_type: TransactionType::Output,
             transaction_sender: String::from("test sender"),
-            transaction_recipient: String::from("test recipient"),
+            //transaction_recipient: String::from("test recipient"),
             transaction_data: String::from("test data"), //data
             transaction_hash: String::from("test hash")
         };

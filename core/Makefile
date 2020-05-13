@@ -120,7 +120,7 @@ dbb:
 	time docker build --force-rm --rm --network="host" --file "./DockerfileBob" --build-arg nodeType=bob -t bob_node .
 dbc:
 	time docker build --force-rm --rm --network="host" --file "./DockerfileCici" --build-arg nodeType=cici -t cici_node .
-rac: # run all containers
+rac: # run all containers from docker hub
 	docker run --log-opt max-size=10m -d -p 8081:8081 kuntalabs/africaos:latest ./core node-name="alices node" node-id=1 port=8081 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8081
 	docker run --log-opt max-size=10m -d -p 8082:8082 kuntalabs/africaos:latest ./core node-name="bob's node" node-id=2 port=8082 peers=docker.for.mac.host.internal:8081,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8082
 	docker run --log-opt max-size=10m -d -p 8083:8083 kuntalabs/africaos:latest ./core node-name="cici's node" node-id=3 port=8083 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8081 ip=docker.for.mac.host.internal:8083
@@ -128,6 +128,12 @@ racl: # run all containers local
 	docker run --log-opt max-size=5m --log-opt max-file=10 -d -p 8081:8081 aos:latest ./core node-name="alices node" node-id=1 port=8081 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8081
 	docker run --log-opt max-size=5m --log-opt max-file=10 -d -p 8082:8082 aos:latest ./core node-name="bob's node" node-id=2 port=8082 peers=docker.for.mac.host.internal:8081,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8082
 	docker run --log-opt max-size=5m --log-opt max-file=10 -d -p 8083:8083 aos:latest ./core node-name="cici's node" node-id=3 port=8083 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8081 ip=docker.for.mac.host.internal:8083
+ldr: # local docker run
+	cd ../ ; make dbm ; cd ./core ; make racl ;
+new_keys:
+	#cd ./signature/keys ; openssl genpkey -algorithm RSA -aes-256-cbc -outform PEM -out private_key.pem -pkeyopt rsa_keygen_bits:2048 ; chmod 0400 private_key.pem ; ssh-keygen -e -f private_key.pem > public_key.pem ; ls ;
+	#cd ./signature/keys ; openssl genpkey -algorithm RSA -aes-256-cbc -outform PEM -out private_key.pem -pkeyopt rsa_keygen_bits:2048 ; chmod 0400 private_key.pem ; ssh-keygen -e -f private_key.pem > public_key.pem ; ls ;
+	cd ./signature/keys ; rm make ./private.der	./private.pem	./public.der ./public.pem ; make ; echo "done making keys" ;
 stress_aws:
 	while true; do make stress_a_aws; sleep 60 ; make stress_b_aws; sleep 60 ; make stress_c_aws; sleep 60 ; done
 stress_a_aws:

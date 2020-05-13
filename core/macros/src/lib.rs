@@ -60,6 +60,28 @@ macro_rules! transaction_input_logic {
 macro_rules! transaction_output_logic {
     /*
         @pattern StateJson, self
+
+        TODO:
+        //// [SIG] [HASHPUBK] [CHECKSIG] [PUBKHASH]
+        TODO: [SIG] [PUBKEY] [CHECKSIG] [PUBKHASH]
+        F - [CHECKSIG] [PUBKHASH]
+        F - CHECK SIGNATURE USING SIG AND HASHPUBK, HASH SUBMITTED PUBLIC KEY
+
+        M - [SIG] [PUBKEY]
+        M - CHECK SIGNATURE USING SIG AND HASHPUBK, public_key_raw
+
+        if this succeeds,the transaction is valid
+
+        BTC:
+        sender:
+        ScriptPubKey= OP_DUP OP_HASH160 <Public KeyHash> OP_EQUAL OP_CHECKSIG
+
+        recipient:
+        ScriptSig= <Signature> <Public Key>
+
+        combined:
+        <sig> <pubKey> OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
+        M + F
     */
     ($state: expr, $tx_hash: expr, $tx_data: expr) => {
         {
@@ -124,6 +146,6 @@ mod tests {
         let test_hash_string: String = String::from("HASHTEST");
         let test_tx_data_string: String = String::from("100,200,test_string");
 
-        
+
     }
 }
