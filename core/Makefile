@@ -90,7 +90,7 @@ create_proposal:
 test:
 	cargo test ;
 	make test_all ;
-test_all: test_proposal test_network test_encode test_timestamp test_block test_hash test_signature
+test_all: test_proposal test_network test_encode test_timestamp test_block test_hash test_signature test_transaction test_macros
 	echo "Done testing all..."
 test_main:
 	cargo test ;
@@ -110,6 +110,10 @@ test_hash:
 	cd hash; RUST_BACKTRACE=1 cargo test --verbose;
 test_signature:
 	cd signature; RUST_BACKTRACE=1 cargo test --verbose;
+test_transaction:
+	cd transaction; RUST_BACKTRACE=1 cargo test --verbose;
+test_macros:
+	cd macros; RUST_BACKTRACE=1 cargo test --verbose;
 dball:
 	make dba ;
 	make dbb ;

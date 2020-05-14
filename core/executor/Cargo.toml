@@ -7,3 +7,4 @@ edition = "2018"
 [dependencies]
 json = "*"
 macros = { path = "../macros" }
+timestamp = { path = "../timestamp" }

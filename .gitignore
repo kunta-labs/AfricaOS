@@ -10,3 +10,4 @@ core/src/target/
 core/src/target/*
 /core/src/target/*
 **/*.rs.bk
+/**/target

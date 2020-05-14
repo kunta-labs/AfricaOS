@@ -786,6 +786,7 @@ mod tests {
           block_time: Timestamp::string_to_timestamp(String::from("0")).unwrap(),
           proposal_hash: String::from("test proposal hash"),
           block_data: String::from("test block data"),
+          transactions: Vec::new()
         };
 
         let stringed_block: &str = "{
@@ -817,6 +818,7 @@ mod tests {
             block_time: Timestamp::string_to_timestamp(String::from("0")).unwrap(),
             proposal_hash: String::from("hash"),
             block_data: String::from("data"),
+            transactions: Vec::new()
         };
         let actual_block: Result<Block, String> = Block::from_json(data);
         assert_eq!(expected_block, actual_block.unwrap());

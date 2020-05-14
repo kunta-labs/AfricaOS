@@ -611,6 +611,7 @@ impl ExecuteTransactions for Transaction {
             Some(state) => {
                 println!( "execute_block_transactions(), current_state: {}", State::to_json( state.clone() ) );
                 let mut json_state_buffer: JsonValue = ( State::to_json( state.clone() ) );
+                // iterate over each transaction
                 transactions.iter().for_each( | tx | {
                     println!( "execute_block_transactions(), BEFORE json_state_buffer OVERWRITE: {}", json_state_buffer.clone() );
                     json_state_buffer = tx.execute( &Some( State::to_state( json_state_buffer.clone() ) ) );
@@ -653,6 +654,8 @@ impl Executable for Transaction {
                 // TODO: create new address in state
                 let mut state_as_json: JsonValue = State::to_json(current_state_buffer.clone().unwrap());
                 Executor::execute_transaction_output_logic(state_as_json,
+                                                           self.transaction_timestamp.clone(),
+                                                           self.transaction_sender.clone(),
                                                            self.transaction_hash.clone(),
                                                            self.transaction_data.clone())
             },
@@ -697,7 +700,7 @@ mod tests {
         };
         let execution_result: JsonValue = new_tx.execute( test_state );
         let expected_json: JsonValue = object!{
-            "test hash" => "test hash"
+            "test hash" => "test data"
         };
         assert_eq!(expected_json, execution_result);
     }

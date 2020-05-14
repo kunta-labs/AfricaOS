@@ -20,6 +20,7 @@ extern crate macros;
 
 use json::{JsonValue};
 use macros::{transaction_output_logic,proposal_creator_election};
+use timestamp::{Timestamp};
 
 pub struct Executor {}
 pub trait ExecuteMacro {
@@ -28,6 +29,8 @@ pub trait ExecuteMacro {
     @desc macro for tx output
     */
     fn execute_transaction_output_logic(state: JsonValue,
+                                        transaction_timestamp: Timestamp,
+                                        transaction_sender: String,
                                         transaction_hash: String,
                                         transaction_data: String) -> JsonValue;
 
@@ -42,9 +45,13 @@ pub trait ExecuteMacro {
 impl ExecuteMacro for Executor {
 
     fn execute_transaction_output_logic(state: JsonValue,
+                                        transaction_timestamp: Timestamp,
+                                        transaction_sender: String,
                                         transaction_hash: String,
                                         transaction_data: String) -> JsonValue {
         transaction_output_logic!(state.clone(),
+                                  transaction_timestamp,
+                                  transaction_sender,
                                   transaction_hash,
                                   transaction_data)
     }
@@ -58,8 +65,14 @@ impl ExecuteMacro for Executor {
 
 #[cfg(test)]
 mod tests {
+
+    use::{Executor, ExecuteMacro};
+
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    fn test_execute_proposal_creator_election() {
+        let peer_length: usize = 3;
+        let latest_block_id: i64 = 0;
+        let new_creator_id: i64 = Executor::execute_proposal_creator_election{peer_length, latest_block_id};
+        assert_
     }
 }
