@@ -36,7 +36,7 @@ To reset Alice
 make clean_alice # from inside ./core/
 ```
 
-# To start 3-node network
+# To start 3-node network 
 To create Bob, copy the folder, and create another folder one level up from the projects root, and run the same command for bob
 ```
 make bob # from inside ./core/
@@ -66,11 +66,28 @@ To create/submit a new transaction every m seconds
 make stress # from inside ./core/
 ```
 
+This will create one output tx
+```
+make stress_output # from inside ./core/
+```
+
+This will create an input tx for that output
+```
+tx_hash=< OUTPUT-TX-HASH > make stress_input
+```
+
+Viewing state from your container
+```
+docker cp 8dcbe580eb6f:storage/states.db ./states.db ; cat ./states.db ; rm ./states.db
+```
+
 # Docker
 To build the core docker container, run (from inside ./)
 ```
 make dbm # stands for "docker build main"
 ```
+
+this will build the container from source
 
 ### Pulling AOS core container
 to pull a minimal docker image of AfricaOS, run
@@ -81,7 +98,7 @@ docker pull kuntalabs/africaos:latest
 ### Running 3-node network
 to run the 3 containers, and set up the 3-node network, run (from inside ./core/)
 ```
-make rac # stands for "run all containers"
+make rac #  or make dbm, stands for "run all containers"
 ```
 
 ## To Contribute
