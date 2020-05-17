@@ -42,7 +42,7 @@ pub enum SignatureFormat {
 
 
 #[derive(Debug)]
-enum SignatureError {
+pub enum SignatureError {
    IO(std::io::Error),
    BadPrivateKey,
    OOM,
@@ -51,8 +51,8 @@ enum SignatureError {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct DigitalSignature {
-    signature_type: SignatureType,
-    format_type: SignatureFormat
+    pub signature_type: SignatureType,
+    pub format_type: SignatureFormat
 }
 
 trait SignVerify {
@@ -207,7 +207,7 @@ impl Signer for Signature {
 @name Verifier
 @description
 */
-trait Verifier {
+pub trait Verifier {
     /*
     @name verify
     @description

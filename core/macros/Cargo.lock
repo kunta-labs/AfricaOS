@@ -77,6 +77,7 @@ dependencies = [
 name = "macros"
 version = "0.1.0"
 dependencies = [
+ "encode 0.1.0",
  "json 0.12.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "signature 0.1.0",
  "timestamp 0.1.0",

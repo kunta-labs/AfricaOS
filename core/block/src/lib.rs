@@ -692,7 +692,12 @@ impl CommitBlock for Block {
                 match Self::commit_block(block.clone()) {
                     Ok(_) => {
                         println!("[BLOCK, CRITICAL] COMMIT BLOCK SUCCESSFUL");
+
+                        // TODO: only clear if proposals[block_parent_hash].
+                        // This clears all transactions waiting to get into chain
+                        // upon every new block commit, regardless of who commited it
                         Transaction::clear_transaction_index();
+
                         Ok(())
                     },
                     Err(_) => {

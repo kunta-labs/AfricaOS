@@ -33,7 +33,7 @@ pub struct DB {
 pub trait NodeNameSetter {
     fn set_node_name(name: String) -> ();
 }
-
+ 
 impl NodeNameSetter for DB {
     fn set_node_name(name: String) -> () {
         lazy_static! {
@@ -255,7 +255,7 @@ impl DBReadProposal for DB {
                     //check length of proposal index
                     if number_of_proposals > maximum_length {
                         println!("DB, write_proposal_index, number_of_proposals IS GREATER THAN maximum_length");
-                        
+
                         // TODO: remove all keys lower than threshold
                         let proposals_iter = &proposal_index.clone()["proposals"];
                         // recent proposal

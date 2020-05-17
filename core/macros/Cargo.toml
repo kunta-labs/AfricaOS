@@ -8,3 +8,4 @@ edition = "2018"
 json = "*"
 timestamp = { path = "../timestamp" }
 signature = { path = "../signature" }
+encode = { path = "../encode" }

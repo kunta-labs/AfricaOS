@@ -280,8 +280,10 @@ dependencies = [
 name = "executor"
 version = "0.1.0"
 dependencies = [
+ "encode 0.1.0",
  "json 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "macros 0.1.0",
+ "signature 0.1.0",
  "timestamp 0.1.0",
 ]
 
@@ -579,6 +581,7 @@ dependencies = [
 name = "macros"
 version = "0.1.0"
 dependencies = [
+ "encode 0.1.0",
  "json 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "signature 0.1.0",
  "timestamp 0.1.0",

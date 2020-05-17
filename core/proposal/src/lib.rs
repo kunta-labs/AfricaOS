@@ -1216,7 +1216,7 @@ impl ProposalResolutionAccepted for Proposal {
                 } else {
                        println!("invoke_action(), proposal_resolution [Committed] - validate_proposal_block FAILED");
                        Err(())
-                }
+                } 
             },
             _ => {
                 Err(())

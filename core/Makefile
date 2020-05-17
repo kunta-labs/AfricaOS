@@ -65,12 +65,17 @@ p_bob:
 	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8082" 127.0.0.1:8082/proposal/create/
 p_cici:
 	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8083" 127.0.0.1:8083/proposal/create/
+stress_output:
+	curl -d 'TESTSTRING' --header "Origin: test_user" --header "User-Agent: e2a8aca48c5b24df14c6e0ab0b30df7ed50fa97bc22fd706c71a7eebe96a8b67 10" 127.0.0.1:8081/transaction/submit/output/ ;
+stress_input:
+	curl -d 'TESTSTRING' --header "Origin: test_user_2" --header "User-Agent: test_user ${tx_hash} opEssZ7CaoYvtZJErFPqiB0L+lxwFm1/YT3tLZ+07fCnwWvuRcXtpwmo4esdNs05OItDBK6SZaxVPO+tKG22NC8R64DQj4J6CXpt4XMxtGJSUeY9MyZB6eyW8qYye7zascGv5+Eht4VJ5Zu9TX8Xl2+oyZA+3RYw5QKHvMgHyN0mpPU8PYpBDdVKg5Nglh4WOjqrvJF/EAdyqfeLN0CNJHeFwwjlkDaOz1x9LBOBf8c5HhDulgblSd4tlJ9zRA97SbnxmQtip/XDLweTtCx9vmjFd0tw/JTcfl2V87r+JgxL0r9EgEoFsexs3XkdqKZ2LzypPMvp0XqeoNEJ03g96A== MIIBCgKCAQEAuJ3hhGpo+nInkqHpgBx3E5eihx0IGNVit5u0UlvLHmnW2PJ3HqFyafr/eYaas7VetW5Ss5kAWZmH3oED7n4xVlXrUeFlSwShSDVMKyT3iK1et1KQIX5cqp2CiFSs+xi5eJOEEWZxoexYbSTg0Rg34gzob+VqHZzRtRN9eTja7ZCE3/m3cMlWfb7yL2jyN521ZL02QG9PZ4EYenDTM2xcWvCZrWtKUFLahCWWQ1H8ZpoWg/y/tenvUy5YnWLrbhbSZqMJQYfnUwr8FRWZsiI2RWRtXlx9X6bxvaOoG/h4IOhV/G52Xas2WxxUbZ5rgRPziA/mvkJxytHkZPeEnpRcawIDAQAB" 127.0.0.1:8081/transaction/submit/input/ ;
 stress_a:
-	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" --header "User-Agent: 100,200,test_string" 127.0.0.1:8081/transaction/submit/output ;
+	#curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" --header "User-Agent: 100,200,test_string" 127.0.0.1:8081/transaction/submit/output ;
+	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" --header "User-Agent: e2a8aca48c5b24df14c6e0ab0b30df7ed50fa97bc22fd706c71a7eebe96a8b67 10" 127.0.0.1:8081/transaction/submit/output/ ;
 stress_b:
-	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8082" --header "User-Agent: 100,200,test_string" 192.168.0.8:8082/transaction/submit/output ;
+	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8082" --header "User-Agent: 100,200,test_string" 192.168.0.8:8082/transaction/submit/output/ ;
 stress_c:
-	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8083" --header "User-Agent: 100,200,test_string" 192.168.0.8:8083/transaction/submit/output ;
+	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8083" --header "User-Agent: 100,200,test_string" 192.168.0.8:8083/transaction/submit/output/ ;
 api_height:
 	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8083" --header "User-Agent: NOT_USED" 127.0.0.1:8081/API/block/height/ ;
 api_block_id:
@@ -114,6 +119,8 @@ test_transaction:
 	cd transaction; RUST_BACKTRACE=1 cargo test --verbose;
 test_macros:
 	cd macros; RUST_BACKTRACE=1 cargo test --verbose;
+dbm:
+	cd ../ ; make dbm ; cd ./core/ ; make racl #; make ldr
 dball:
 	make dba ;
 	make dbb ;
@@ -132,8 +139,8 @@ racl: # run all containers local
 	docker run --log-opt max-size=5m --log-opt max-file=10 -d -p 8081:8081 aos:latest ./core node-name="alices node" node-id=1 port=8081 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8081
 	docker run --log-opt max-size=5m --log-opt max-file=10 -d -p 8082:8082 aos:latest ./core node-name="bob's node" node-id=2 port=8082 peers=docker.for.mac.host.internal:8081,docker.for.mac.host.internal:8083 ip=docker.for.mac.host.internal:8082
 	docker run --log-opt max-size=5m --log-opt max-file=10 -d -p 8083:8083 aos:latest ./core node-name="cici's node" node-id=3 port=8083 peers=docker.for.mac.host.internal:8082,docker.for.mac.host.internal:8081 ip=docker.for.mac.host.internal:8083
-ldr: # local docker run
-	cd ../ ; make dbm ; cd ./core ; make racl ;
+# ldr: # local docker run
+# 	cd ../ ; make dbm ; cd ./core ; make racl ;
 new_keys:
 	#cd ./signature/keys ; openssl genpkey -algorithm RSA -aes-256-cbc -outform PEM -out private_key.pem -pkeyopt rsa_keygen_bits:2048 ; chmod 0400 private_key.pem ; ssh-keygen -e -f private_key.pem > public_key.pem ; ls ;
 	#cd ./signature/keys ; openssl genpkey -algorithm RSA -aes-256-cbc -outform PEM -out private_key.pem -pkeyopt rsa_keygen_bits:2048 ; chmod 0400 private_key.pem ; ssh-keygen -e -f private_key.pem > public_key.pem ; ls ;

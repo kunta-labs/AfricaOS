@@ -35,7 +35,9 @@ use proposal::{Proposal,
 use url::Url;
 use reqwest::header::{USER_AGENT, CONTENT_TYPE, ORIGIN};
 use encode::{Encoder, Base64Encode, Base64Decode};
-use transaction::{Transaction, CreateNewOuputTransaction};
+use transaction::{Transaction,
+                  CreateNewOuputTransaction,
+                  CreateNewInputTransaction};
 use block::{Block, ReadBlock, BlockToJson};
 
 
@@ -514,7 +516,7 @@ impl Receiver for Server {
                                        \r\n\r\n{}
                                        \r\n", result.chars().count(), result );
 
-    
+
         let response_string: String = String::from(response_result);
 
         //TODO: WRITE BACK THE RESULT PASSED
@@ -632,8 +634,28 @@ impl API for Server {
             @desc for an external submission of a transaction
             */
             "/transaction/submit/output/" => {
-                println!("Transaction Submit: {}, {}, {}", command, data, request_origin);
+                println!("Transaction Output Submit: {}, {}, {}", command, data, request_origin);
                 let new_transaction: Option<Transaction> = Transaction::new_output(request_origin.clone(), String::from(data.clone()) );
+                match new_transaction {
+                    Some(tx) => {
+                        println!("Transaction Made: {}", tx.transaction_id);
+                        let create_tx_result: String = format!("Transaction Received {}", tx.transaction_hash);
+                        Ok( String::from(create_tx_result) )
+                    },
+                    None => {
+                        println!("ERROR Transaction NOT Made");
+                        Err( String::from("Transaction ERROR, NEW TX FAILED TO BE MADE") )
+                    }
+                }
+            },
+
+            /*
+            @endpoint /transaction/submit/output/
+            @desc for an external submission of a transaction
+            */
+            "/transaction/submit/input/" => {
+                println!("Transaction Input Submit: {}, {}, {}", command, data, request_origin);
+                let new_transaction: Option<Transaction> = Transaction::new_input(request_origin.clone(), String::from(data.clone()) );
                 match new_transaction {
                     Some(tx) => {
                         println!("Transaction Made: {}", tx.transaction_id);

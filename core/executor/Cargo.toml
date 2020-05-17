@@ -8,3 +8,5 @@ edition = "2018"
 json = "*"
 macros = { path = "../macros" }
 timestamp = { path = "../timestamp" }
+signature = { path = "../signature" }
+encode = { path = "../encode" }
