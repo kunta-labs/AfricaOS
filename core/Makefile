@@ -65,10 +65,14 @@ p_bob:
 	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8082" 127.0.0.1:8082/proposal/create/
 p_cici:
 	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8083" 127.0.0.1:8083/proposal/create/
-stress_output:
+output:
 	curl -d 'TESTSTRING' --header "Origin: test_user" --header "User-Agent: e2a8aca48c5b24df14c6e0ab0b30df7ed50fa97bc22fd706c71a7eebe96a8b67 10" 127.0.0.1:8081/transaction/submit/output/ ;
-stress_input:
+input:
 	curl -d 'TESTSTRING' --header "Origin: test_user_2" --header "User-Agent: test_user ${tx_hash} opEssZ7CaoYvtZJErFPqiB0L+lxwFm1/YT3tLZ+07fCnwWvuRcXtpwmo4esdNs05OItDBK6SZaxVPO+tKG22NC8R64DQj4J6CXpt4XMxtGJSUeY9MyZB6eyW8qYye7zascGv5+Eht4VJ5Zu9TX8Xl2+oyZA+3RYw5QKHvMgHyN0mpPU8PYpBDdVKg5Nglh4WOjqrvJF/EAdyqfeLN0CNJHeFwwjlkDaOz1x9LBOBf8c5HhDulgblSd4tlJ9zRA97SbnxmQtip/XDLweTtCx9vmjFd0tw/JTcfl2V87r+JgxL0r9EgEoFsexs3XkdqKZ2LzypPMvp0XqeoNEJ03g96A== MIIBCgKCAQEAuJ3hhGpo+nInkqHpgBx3E5eihx0IGNVit5u0UlvLHmnW2PJ3HqFyafr/eYaas7VetW5Ss5kAWZmH3oED7n4xVlXrUeFlSwShSDVMKyT3iK1et1KQIX5cqp2CiFSs+xi5eJOEEWZxoexYbSTg0Rg34gzob+VqHZzRtRN9eTja7ZCE3/m3cMlWfb7yL2jyN521ZL02QG9PZ4EYenDTM2xcWvCZrWtKUFLahCWWQ1H8ZpoWg/y/tenvUy5YnWLrbhbSZqMJQYfnUwr8FRWZsiI2RWRtXlx9X6bxvaOoG/h4IOhV/G52Xas2WxxUbZ5rgRPziA/mvkJxytHkZPeEnpRcawIDAQAB" 127.0.0.1:8081/transaction/submit/input/ ;
+stress_output:
+	while true; do make output; sleep 60; done
+stress_input:
+	while true; do tx_hash=cb2c68c3ca7d2ce1411d3f1c6f501e6e1605814603e70bbdf0fd9dc113267408 make output; sleep 60; done
 stress_a:
 	#curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" --header "User-Agent: 100,200,test_string" 127.0.0.1:8081/transaction/submit/output ;
 	curl -d 'TESTSTRING' --header "Origin: 127.0.0.1:8081" --header "User-Agent: e2a8aca48c5b24df14c6e0ab0b30df7ed50fa97bc22fd706c71a7eebe96a8b67 10" 127.0.0.1:8081/transaction/submit/output/ ;

@@ -452,7 +452,9 @@ impl Receiver for Server {
           the reading of data from the requestor
     */
     fn handle_read(mut stream: &TcpStream) -> Result<String, String> {
-        let mut buf: [u8; 4096] = [0u8 ; 4096];
+        //2048, 4096, 8192, 16384, 32768, 65536
+        //let mut buf: [u8; 4096] = [0u8 ; 4096];
+        let mut buf: [u8; 65536] = [0u8 ; 65536];
         println!("handle_read, Stream IP: {}", stream.local_addr().unwrap());
         match stream.read(&mut buf) {
             Ok(_) => {
