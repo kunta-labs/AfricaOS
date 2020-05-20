@@ -36,7 +36,7 @@ To reset Alice
 make clean_alice # from inside ./core/
 ```
 
-# To start 3-node network 
+# To start 3-node network
 To create Bob, copy the folder, and create another folder one level up from the projects root, and run the same command for bob
 ```
 make bob # from inside ./core/
@@ -100,6 +100,33 @@ to run the 3 containers, and set up the 3-node network, run (from inside ./core/
 ```
 make rac #  or make dbm, stands for "run all containers"
 ```
+
+# Transactions
+Combined txs will have the following default values (this is to be customized for your use case):
+```
+partner_sender <partner_tx_hash> <sig> <pk> <pkhash> <amount>
+```
+
+## Output
+```
+<pkhash> <amount>
+```
+
+Senders submit the hash of the receivers public key to the blockchain, and the amount to send to the receiver
+
+## Input
+```
+partner_sender <partner_tx_hash> <sig> <pk>
+```
+Receivers submit the sender of the amount, the hash of the output transaction, their signature of an arbitrary string (default "TEST"), and finally the receiver's public key
+
+# Customization
+We expose common blockchain customization points
+- Block Validation
+- Proposal Validation
+- Proposal Creator Election
+- Transaction Output Logic
+- Transaction Input Logic
 
 ## To Contribute
 TODO:

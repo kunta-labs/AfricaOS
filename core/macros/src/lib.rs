@@ -64,30 +64,7 @@ macro_rules! proposal_creator_election {
 macro_rules! transaction_output_logic {
     /*
         @pattern StateJson, self
-
-        TODO:
-        //// [SIG] [HASHPUBK] [CHECKSIG] [PUBKHASH]
-        TODO: [SIG] [PUBKEY] [CHECKSIG] [PUBKHASH]
-        F - [CHECKSIG] [PUBKHASH]
-        F - CHECK SIGNATURE USING SIG AND HASHPUBK, HASH SUBMITTED PUBLIC KEY
-
-        M - [SIG] [PUBKEY]
-        M - CHECK SIGNATURE USING SIG AND HASHPUBK, public_key_raw
-
-        if this succeeds,the transaction is valid
-
-        BTC:
-        sender:
-        ScriptPubKey= OP_DUP OP_HASH160 <Public KeyHash> OP_EQUAL OP_CHECKSIG
-        OP_DUP OP_HASH160 <PubkeyHash> OP_EQUALVERIFY OP_CHECKSIG
-
-
-        recipient:
-        ScriptSig= <Signature> <Public Key>
-
-        combined:
-        <sig> <pubKey> OP_DUP OP_HASH160 <pubKeyHash> OP_EQUALVERIFY OP_CHECKSIG
-        M + F
+        default output, to be customized
     */
     ($state: expr, $tx_timestamp: expr, $tx_sender: expr, $tx_hash: expr, $tx_data: expr) => {
         {
@@ -195,6 +172,7 @@ macro_rules! transaction_input_logic {
     ($state: expr, $tx_timestamp: expr, $tx_sender: expr, $tx_hash: expr, $tx_data: expr) => {
         {
             println!("TX execute TX INput BEFORE: {} : ", $state.clone() );
+
             let mut state_as_json: JsonValue = $state;
 
             let b64_decoded: Result<String, String> = Encoder::decode_base64($tx_data);
@@ -212,12 +190,12 @@ macro_rules! transaction_input_logic {
                     let tx_signature: String = String::from(tx_sections[2]);
                     let tx_public_key: String = String::from(tx_sections[3]);
 
-
                     // id state has the sender key
                     if state_as_json.has_key( &(format!("{}", tx_partner_hash).to_string()) ) {
 
                         let partner_tx: Option<&str> = state_as_json[ tx_partner_hash ].as_str();
 
+                        // if partner hash exists
                         if partner_tx.clone().is_some() {
 
                             println!("partner tx: {}", partner_tx.unwrap());
@@ -232,6 +210,9 @@ macro_rules! transaction_input_logic {
                             let public_key_hash_section: String = String::from(partner_tx_sections[0]);
                             let partner_amount_section: String = String::from(partner_tx_sections[1]);
 
+
+                            //TODO: VERIFY RECEIVERS SUBMITTED HASH HASHES TO BE WHAT THE RECEIVER SUBMITTED
+                            //
 
                             // TODO: check signature
                             let digital_signature: DigitalSignature = signature::DigitalSignature {
@@ -259,7 +240,6 @@ macro_rules! transaction_input_logic {
 
                                                 // grab amount for sender
                                                 // parse
-                                                //let state_account_amount: Option<i32> = state_as_json[ $tx_sender.clone() ].as_i32();
                                                 //let state_account_amount: Option<i32> = state_as_json[ $tx_sender.clone() ].as_i32();
                                                 let state_account_amount: &JsonValue = &state_as_json[ $tx_sender.clone() ];
                                                 let parsed_string_state_account_amount: String = state_account_amount.to_string();
@@ -425,6 +405,7 @@ macro_rules! transaction_input_logic {
                             }
 
                         } else {
+                            // partner tx doesnt exist in state
                             $state
                         }
 
@@ -435,15 +416,11 @@ macro_rules! transaction_input_logic {
                     }
                     //////////////////////
 
-
                 },
                 Err(_) => {
                     $state
                 }
             }
-
-
-
         }
     }
 }
@@ -465,34 +442,6 @@ mod tests {
                     SignatureFormat,
                     SignatureError,
                     Signature};
-    // #[test]
-    // fn test_transaction_output_logic() -> (){
-    //
-    //
-    //     let test_timestamp: Option<Timestamp> = Timestamp::new();
-    //     let test_sender: String = String::from("test_sender");
-    //     let test_hash_string: String = String::from("HASHTEST");
-    //     let test_tx_data_string: String = String::from("");
-    //
-    //     //
-    //     let test_state_json: JsonValue = object!{
-    //         "test" => "test"
-    //     };
-    //
-    //     let test_json_2: JsonValue = object!{
-    //         "test" => "test",
-    //         "HASHTEST" => "100,200,test_string",
-    //         "test_sender" => 0
-    //     };
-    //
-    //
-    //     let result: JsonValue = transaction_output_logic!( test_state_json.clone(),
-    //                                                        test_timestamp.unwrap(),
-    //                                                        test_sender,
-    //                                                        test_hash_string,
-    //                                                        test_tx_data_string );
-    //     assert_eq!(test_json_2, result);
-    // }
 
     #[test]
     fn test_transaction_output_public_key_new_account() -> (){
