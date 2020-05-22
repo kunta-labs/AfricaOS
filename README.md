@@ -1,5 +1,5 @@
 # Africa Operating System (AfricaOS)
-A simple, customizable, proposal-based, replicated state machine (RSM), inspired by pBFT (Practical Byzantine Fault Tolerance) written in pure Rust
+A simple, customizable, proposal-based, replicated state machine (RSM), inspired by pBFT (Practical Byzantine Fault Tolerance) written in pure Rust. We show how to setup an N-node network, of which accepts transactions. The transactions can execute arbitrary logic.
 
 | Status Type | Status |
 | --- | --- |
@@ -104,7 +104,7 @@ make rac #  or make dbm, stands for "run all containers"
 # Transactions
 Combined txs will have the following default values (this is to be customized for your use case):
 ```
-partner_sender <partner_tx_hash> <sig> <pk> <pkhash> <amount>
+<partner_sender> <partner_tx_hash> <sig> <pk> <pkhash> <amount>
 ```
 
 ## Output
@@ -116,12 +116,12 @@ Senders submit the hash of the receivers public key to the blockchain, and the a
 
 ## Input
 ```
-partner_sender <partner_tx_hash> <sig> <pk>
+<partner_sender> <partner_tx_hash> <sig> <pk>
 ```
-Receivers submit the sender of the amount, the hash of the output transaction, their signature of an arbitrary string (default "TEST"), and finally the receiver's public key
+Receivers submit the sender of the amount, the hash of the output transaction, their signature of an arbitrary string (default: "TEST"), and finally the receiver's public key
 
 # Customization
-We expose common blockchain customization points
+We expose common customization points
 - Block Validation
 - Proposal Validation
 - Proposal Creator Election
