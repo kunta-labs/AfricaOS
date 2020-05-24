@@ -120,6 +120,11 @@ Senders submit the hash of the receivers public key to the blockchain, and the a
 ```
 Receivers submit the sender of the amount, the hash of the output transaction, their signature of an arbitrary string (default: "TEST"), and finally the receiver's public key
 
+## Generating new keys
+```
+make new_keys
+```
+
 # Customization
 We expose common customization points
 - Block Validation
