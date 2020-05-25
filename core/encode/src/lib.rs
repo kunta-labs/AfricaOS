@@ -20,17 +20,43 @@ use base64::{encode, decode};
 
 pub struct Encoder {}
 pub trait RawBytesEncode {
+    /*
+    @name encode_rawbytes
+    @description
+    */
     fn encode_rawbytes(string_to_encode: String) -> Vec<u8>;
+
+    /*
+    @name bytes_to_base64
+    @description
+    */
+    fn bytes_to_base64(bytes: Vec<u8>) -> Result<String, String>;
 }
 
 impl RawBytesEncode for Encoder {
     fn encode_rawbytes(mut string_to_encode: String) -> Vec<u8> {
         string_to_encode.as_bytes().to_vec()
     }
+
+    fn bytes_to_base64(bytes: Vec<u8>) -> Result<String, String> {
+        //let result = base64::encode(b"hello world");
+        let result = base64::encode(&bytes);
+        Ok(result)
+    }
 }
 
 pub trait RawBytesDecode {
+    /*
+    @name decode_rawbytes
+    @description convert from Vec<u8> to string
+    */
     fn decode_rawbytes(bytes: Vec<u8>) -> Result<String, String>;
+
+    /*
+    @name base64_to_bytes
+    @description
+    */
+    fn base64_to_bytes(encoded_string: String) -> Result<Vec<u8>, String>;
 }
 
 impl RawBytesDecode for Encoder {
@@ -42,6 +68,19 @@ impl RawBytesDecode for Encoder {
             },
             Err(_) => {
                 Err(String::from("Could not convert raw bytes to string"))
+            }
+        }
+    }
+
+    fn base64_to_bytes(encoded_string: String) -> Result<Vec<u8>, String>{
+        //let decoded_bytes: Vec<u8> = Encoder::encode_rawbytes(bytes_as_string);
+        let decoded_bytes: Result<Vec<u8>, base64::DecodeError> = decode(&encoded_string);
+        match decoded_bytes {
+            Ok(decoded) => {
+                Ok(decoded)
+            },
+            Err(_) => {
+                Err( String::from("Could not convert base64 to bytes") )
             }
         }
     }
@@ -82,9 +121,7 @@ impl Base64Decode for Encoder {
                     Ok(result) => {
                         let decoded_result_w_quotes: String = String::from(result);
                         //TODO: replace only the first and last quotes, not all, since its A json object
-                        let decoded_result_wo_quotes: &str = decoded_result_w_quotes
-                                                             .as_str()
-                                                             .trim_matches('\"');
+                        let decoded_result_wo_quotes: &str = decoded_result_w_quotes.as_str().trim_matches('\"');
                         let final_decoded_result_after_trim: String = String::from(decoded_result_wo_quotes);
                         println!("decoded_result: {}", final_decoded_result_after_trim);
                         Ok(final_decoded_result_after_trim)
@@ -121,7 +158,7 @@ mod tests {
     }
 
     #[test]
-    fn test_decode_sbase64_tring(){
+    fn test_decode_base64_string(){
         let test_string_bytes = String::from("ZXhhbXBsZQ==");
         let expected_result = String::from("example");
         let encoded_result = Encoder::decode_base64(test_string_bytes);
@@ -131,8 +168,18 @@ mod tests {
     }
 
     #[test]
-    fn test_encode_decode_string(){
-
+    fn test_decode_base64_to_bytes(){
+        let test_string_bytes = String::from("ZXhhbXBsZQ==");
+        let expected_byte_array_result: Vec<u8> = vec![0x65u8, 0x78u8, 0x61u8, 0x6Du8, 0x70u8, 0x6Cu8, 0x65u8];
+        let encoded_result = Encoder::base64_to_bytes(test_string_bytes);
+        match encoded_result {
+            Ok(result) => {
+                assert_eq!(result, expected_byte_array_result);
+            },
+            Err(message) => {
+                assert!(false);
+            }
+        }
     }
 
     #[test]
@@ -156,7 +203,7 @@ mod tests {
         let starting_string: String = String::from("{\"test\":\"test\"}");
         let encoded_result: Result<String,String> = Encoder::encode_base64(starting_string.clone());
         if encoded_result.is_ok() {
-            let decoded_result: Result<String,std::str::Utf8Error> = Encoder::decode_base64(encoded_result.unwrap());
+            let decoded_result: Result<String, String> = Encoder::decode_base64(encoded_result.unwrap());
             assert!(decoded_result.clone().is_ok());
             assert_eq!(starting_string, decoded_result.unwrap());
         }

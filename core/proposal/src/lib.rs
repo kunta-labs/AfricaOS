@@ -1216,7 +1216,7 @@ impl ProposalResolutionAccepted for Proposal {
                 } else {
                        println!("invoke_action(), proposal_resolution [Committed] - validate_proposal_block FAILED");
                        Err(())
-                }
+                } 
             },
             _ => {
                 Err(())
@@ -1228,7 +1228,7 @@ impl ProposalResolutionAccepted for Proposal {
 pub trait CalculateProposalCreatorID {
     /*
         @name calculate_next_proposal_creator_id
-        @desc to determine which node is gets to create the next proposal:
+        @desc to determine which node gets to create the next proposal:
         @example node_is is CONGRUENT to current_block_id % peer_set.len()
     */
     fn calculate_next_proposal_creator_id(peer_length: usize, latest_block_id: i64) -> i64;
@@ -1275,26 +1275,42 @@ mod tests {
 
     #[test]
     fn test_calculate_next_proposal_creator_id_3_nodes_block_0() {
-        let number_of_peers: usize = 2;
-        let next_block_id: i64 = 0;
-        assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers,
-                                                                next_block_id), 1);
+        let number_of_peers: usize = 3;
+        let latest_block_id: i64 = 0;
+        let expected_creator_id: i64 = 1;
+        assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers, latest_block_id), expected_creator_id);
     }
 
     #[test]
     fn test_calculate_next_proposal_creator_id_3_nodes_block_1() {
-        let number_of_peers: usize = 2;
-        let next_block_id: i64 = 1;
-        assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers,
-                                                                next_block_id), 2);
+        let number_of_peers: usize = 3;
+        let latest_block_id: i64 = 1;
+        let expected_creator_id: i64 = 2;
+        assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers, latest_block_id), expected_creator_id);
     }
 
     #[test]
     fn test_calculate_next_proposal_creator_id_3_nodes_block_2() {
-        let number_of_peers: usize = 2;
-        let next_block_id: i64 = 2;
-        assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers,
-                                                                next_block_id), 3);
+        let number_of_peers: usize = 3;
+        let latest_block_id: i64 = 2;
+        let expected_creator_id: i64 = 3;
+        assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers, latest_block_id), expected_creator_id);
+    }
+
+    #[test]
+    fn test_calculate_next_proposal_creator_id_3_nodes_block_3() {
+        let number_of_peers: usize = 3;
+        let latest_block_id: i64 = 3;
+        let expected_creator_id: i64 = 1;
+        assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers, latest_block_id), expected_creator_id);
+    }
+
+    #[test]
+    fn test_calculate_next_proposal_creator_id_3_nodes_block_4() {
+        let number_of_peers: usize = 3;
+        let latest_block_id: i64 = 4;
+        let expected_creator_id: i64 = 2;
+        assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers, latest_block_id), expected_creator_id);
     }
 
 

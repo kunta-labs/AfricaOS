@@ -6,3 +6,6 @@ edition = "2018"
 
 [dependencies]
 json = "*"
+timestamp = { path = "../timestamp" }
+signature = { path = "../signature" }
+encode = { path = "../encode" }

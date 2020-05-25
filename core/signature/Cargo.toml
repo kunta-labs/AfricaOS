@@ -5,3 +5,5 @@ authors = ["Kunta Labs"]
 edition = "2018"
 
 [dependencies]
+ring = "0.16.13"
+encode = { path = "../encode" }

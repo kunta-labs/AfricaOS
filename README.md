@@ -1,5 +1,5 @@
 # Africa Operating System (AfricaOS)
-A simple, customizable, proposal-based, replicated state machine (RSM), inspired by pBFT (Practical Byzantine Fault Tolerance) written in pure Rust
+A simple, customizable, proposal-based, replicated state machine (RSM), inspired by pBFT (Practical Byzantine Fault Tolerance) written in pure Rust. We show how to setup an N-node network, of which accepts transactions. The transactions can execute arbitrary logic.
 
 | Status Type | Status |
 | --- | --- |
@@ -66,11 +66,28 @@ To create/submit a new transaction every m seconds
 make stress # from inside ./core/
 ```
 
+This will create one output tx
+```
+make stress_output # from inside ./core/
+```
+
+This will create an input tx for that output
+```
+tx_hash=< OUTPUT-TX-HASH > make stress_input
+```
+
+Viewing state from your container
+```
+docker cp 8dcbe580eb6f:storage/states.db ./states.db ; cat ./states.db ; rm ./states.db
+```
+
 # Docker
 To build the core docker container, run (from inside ./)
 ```
 make dbm # stands for "docker build main"
 ```
+
+this will build the container from source
 
 ### Pulling AOS core container
 to pull a minimal docker image of AfricaOS, run
@@ -81,8 +98,40 @@ docker pull kuntalabs/africaos:latest
 ### Running 3-node network
 to run the 3 containers, and set up the 3-node network, run (from inside ./core/)
 ```
-make rac # stands for "run all containers"
+make rac #  or make dbm, stands for "run all containers"
 ```
+
+# Transactions
+Combined txs will have the following default values (this is to be customized for your use case):
+```
+<partner_sender> <partner_tx_hash> <sig> <pk> <pkhash> <amount>
+```
+
+## Output
+```
+<pkhash> <amount>
+```
+
+Senders submit the hash of the receivers public key to the blockchain, and the amount to send to the receiver
+
+## Input
+```
+<partner_sender> <partner_tx_hash> <sig> <pk>
+```
+Receivers submit the sender of the amount, the hash of the output transaction, their signature of an arbitrary string (default: "TEST"), and finally the receiver's public key
+
+## Generating new keys
+```
+make new_keys
+```
+
+# Customization
+We expose common customization points
+- Block Validation
+- Proposal Validation
+- Proposal Creator Election
+- Transaction Output Logic
+- Transaction Input Logic
 
 ## To Contribute
 TODO:
