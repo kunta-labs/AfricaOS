@@ -1337,5 +1337,4 @@ mod tests {
         assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers, latest_block_id), expected_creator_id);
     }
 
-
 }
