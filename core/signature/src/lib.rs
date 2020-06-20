@@ -272,6 +272,7 @@ impl Verifier for Signature {
         let public_key_path = Path::new("./keys/public.der");
         //let public_key_bytes: Vec<u8> = read_file(public_key_path)?;
 
+        // TODO: remove hardcoded key
         let public_key_base64: &str = "MIIBCgKCAQEAuJ3hhGpo+nInkqHpgBx3E5eihx0IGNVit5u0UlvLHmnW2PJ3HqFyafr/eYaas7VetW5Ss5kAWZmH3oED7n4xVlXrUeFlSwShSDVMKyT3iK1et1KQIX5cqp2CiFSs+xi5eJOEEWZxoexYbSTg0Rg34gzob+VqHZzRtRN9eTja7ZCE3/m3cMlWfb7yL2jyN521ZL02QG9PZ4EYenDTM2xcWvCZrWtKUFLahCWWQ1H8ZpoWg/y/tenvUy5YnWLrbhbSZqMJQYfnUwr8FRWZsiI2RWRtXlx9X6bxvaOoG/h4IOhV/G52Xas2WxxUbZ5rgRPziA/mvkJxytHkZPeEnpRcawIDAQAB";
 
         match Encoder::base64_to_bytes( String::from(public_key_base64) ) {
@@ -360,6 +361,7 @@ mod tests {
 
         match Encoder::base64_to_bytes( String::from(public_key_base64) ) {
             Ok(public_key_bytes) => {
+                // TODO: pass public_key_bytes to to verify function
                 let verification_result: Result<String, SignatureError> = Signature::verify(digital_signature, String::from(signature_result), content);
 
                 match verification_result {
