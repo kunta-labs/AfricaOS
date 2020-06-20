@@ -1216,7 +1216,7 @@ impl ProposalResolutionAccepted for Proposal {
                 } else {
                        println!("invoke_action(), proposal_resolution [Committed] - validate_proposal_block FAILED");
                        Err(())
-                } 
+                }
             },
             _ => {
                 Err(())
@@ -1275,7 +1275,7 @@ mod tests {
 
     #[test]
     fn test_calculate_next_proposal_creator_id_3_nodes_block_0() {
-        let number_of_peers: usize = 3;
+        let number_of_peers: usize = 2; // since a node counts its neighbors
         let latest_block_id: i64 = 0;
         let expected_creator_id: i64 = 1;
         assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers, latest_block_id), expected_creator_id);
@@ -1283,7 +1283,7 @@ mod tests {
 
     #[test]
     fn test_calculate_next_proposal_creator_id_3_nodes_block_1() {
-        let number_of_peers: usize = 3;
+        let number_of_peers: usize = 2;
         let latest_block_id: i64 = 1;
         let expected_creator_id: i64 = 2;
         assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers, latest_block_id), expected_creator_id);
@@ -1291,25 +1291,49 @@ mod tests {
 
     #[test]
     fn test_calculate_next_proposal_creator_id_3_nodes_block_2() {
-        let number_of_peers: usize = 3;
+        let number_of_peers: usize = 2;
         let latest_block_id: i64 = 2;
-        let expected_creator_id: i64 = 3;
+        let expected_creator_id: i64 = 3; //1
         assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers, latest_block_id), expected_creator_id);
     }
 
     #[test]
     fn test_calculate_next_proposal_creator_id_3_nodes_block_3() {
-        let number_of_peers: usize = 3;
+        let number_of_peers: usize = 2;
         let latest_block_id: i64 = 3;
-        let expected_creator_id: i64 = 1;
+        let expected_creator_id: i64 = 1; //2
         assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers, latest_block_id), expected_creator_id);
     }
 
     #[test]
     fn test_calculate_next_proposal_creator_id_3_nodes_block_4() {
-        let number_of_peers: usize = 3;
+        let number_of_peers: usize = 2;
         let latest_block_id: i64 = 4;
-        let expected_creator_id: i64 = 2;
+        let expected_creator_id: i64 = 2; //1
+        assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers, latest_block_id), expected_creator_id);
+    }
+
+    #[test]
+    fn test_calculate_next_proposal_creator_id_3_nodes_block_5() {
+        let number_of_peers: usize = 2;
+        let latest_block_id: i64 = 5;
+        let expected_creator_id: i64 = 3; //2
+        assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers, latest_block_id), expected_creator_id);
+    }
+
+    #[test]
+    fn test_calculate_next_proposal_creator_id_3_nodes_block_6() {
+        let number_of_peers: usize = 2;
+        let latest_block_id: i64 = 6;
+        let expected_creator_id: i64 = 1;
+        assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers, latest_block_id), expected_creator_id);
+    }
+
+    #[test]
+    fn test_calculate_next_proposal_creator_id_3_nodes_block_66() {
+        let number_of_peers: usize = 2;
+        let latest_block_id: i64 = 66;
+        let expected_creator_id: i64 = 1;
         assert_eq!(Proposal::calculate_next_proposal_creator_id(number_of_peers, latest_block_id), expected_creator_id);
     }
 

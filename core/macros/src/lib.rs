@@ -51,7 +51,7 @@ macro_rules! proposal_creator_election {
     ($peer_length: expr, $latest_block_id: expr) => {
         {
             //( ($latest_block_id + 1) % ( ($peer_length + 1) as i64) ) + 1
-            ($latest_block_id % $peer_length as i64) + 1
+            ( ($latest_block_id) % ($peer_length + 1) as i64) + 1
         }
     }
 }
