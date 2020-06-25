@@ -754,6 +754,7 @@ trait HashProposal {
 
 impl HashProposal for Proposal {
     fn hash_proposal(calculated_proposal_id: i32, new_proposal_sender: String, ts: Timestamp) -> String {
+        // TODO: include 
         let raw_str: String = format!("{}{}{}", calculated_proposal_id, new_proposal_sender, ts.timestamp);
         let str_to_hash: &str = raw_str.as_str();
         let string_to_hash: String = String::from( str_to_hash );
@@ -795,6 +796,9 @@ impl NewProposal for Proposal {
         match new_proposal_timestamp {
             Some(ts) => {
                 let new_proposal_sender: String = request_origin;
+
+                // TODO: only hashing proposal id, sender, and timestamp.
+                // TODO: must add other components
                 let new_proposal_hash: String = Self::hash_proposal(calculated_proposal_id.clone(), new_proposal_sender.clone(), ts.clone());
                 //TODO: CREATE NEW BLOCK
                 let new_proposal_block: Result<Block, String> = Block::new(new_proposal_hash.clone());

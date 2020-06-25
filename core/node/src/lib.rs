@@ -687,14 +687,15 @@ impl StateTransition for Node {
 
                 for peer in self.peers.clone().peer_set {
 
-                    if Server::broadcast_proposal_resolution(proposal.clone(),
-                                                          peer.clone().location,
-                                                          node_ip.clone()).is_ok() {
-                        println!("[determine_transition_step], broadcast_proposal_resolution SUCCESS...");
-                    } else {
-                        println!("[determine_transition_step], broadcast_proposal_resolution FAILED...");
-
-                    }
+                    // TODO: REMOVE CUZ TX ARE GETTING EXECUTED MORE THAN ONCE
+                    // if Server::broadcast_proposal_resolution(proposal.clone(),
+                    //                                       peer.clone().location,
+                    //                                       node_ip.clone()).is_ok() {
+                    //     println!("[determine_transition_step], broadcast_proposal_resolution SUCCESS...");
+                    // } else {
+                    //     println!("[determine_transition_step], broadcast_proposal_resolution FAILED...");
+                    //
+                    // }
 
                 }
 
