@@ -65,6 +65,7 @@ pub enum ProposalStatus {
     Rejected,   //proposal rejected by peers
     RejectedBroadcasted,   //proposal rejected by a node AND BROADCASTED
     RejectedByNetwork,   //proposal rejected by peervalidate_proposals, AND BROADCASTED
+    PreCommit,   //PRECOMMIT
     Committed,   //proposal agreed upon by peers
     NotValid,    //proposals that do not match any of the above enum values
     NotValidIncorrectNextBlockIndex,    //proposals that do not have the correct next block index
@@ -88,6 +89,7 @@ impl StatusToString for Proposal {
             ProposalStatus::RejectedBroadcasted    => "rejected_broadcasted",
             ProposalStatus::RejectedByNetwork    => "rejected_by_network",
             ProposalStatus::Committed    => "committed",
+            ProposalStatus::PreCommit    => "precommit",
             ProposalStatus::NotValid    => "notvalid",
             ProposalStatus::NotValidIncorrectNextBlockIndex => "not_valid_incorrect_next_block_id",
             ProposalStatus::NotValidIncorrectProposalHash => "not_valid_incorrect_proposal_hash",
@@ -120,6 +122,7 @@ impl StringToStatus for Proposal {
             "rejected_broadcasted" =>   ProposalStatus::RejectedBroadcasted,
             "rejected_by_network" =>   ProposalStatus::RejectedByNetwork,
             "committed" =>   ProposalStatus::Committed,
+            "precommit" =>   ProposalStatus::PreCommit,
             "notvalid" =>            ProposalStatus::NotValid,
             "not_valid_incorrect_next_block_id" => ProposalStatus::NotValidIncorrectNextBlockIndex,
             "not_valid_incorrect_proposal_hash" => ProposalStatus::NotValidIncorrectProposalHash,
@@ -754,7 +757,7 @@ trait HashProposal {
 
 impl HashProposal for Proposal {
     fn hash_proposal(calculated_proposal_id: i32, new_proposal_sender: String, ts: Timestamp) -> String {
-        // TODO: include 
+        // TODO: include
         let raw_str: String = format!("{}{}{}", calculated_proposal_id, new_proposal_sender, ts.timestamp);
         let str_to_hash: &str = raw_str.as_str();
         let string_to_hash: String = String::from( str_to_hash );
@@ -1211,6 +1214,7 @@ impl ProposalResolutionAccepted for Proposal {
                 println!("invoke_action(), proposal_resolution - received_proposal STATUS IS Commited");
 
                 //TODO: WE ACCEPTED IT, BROADCASTED IT AND WE JUST RECEIVED A RESOLUTION
+                // TODO: REMOVE CUZ TX ARE GETTING EXECUTED MORE THAN ONCE
                 if received_proposal
                    .clone()
                    .validate_proposal_block()
@@ -1221,6 +1225,7 @@ impl ProposalResolutionAccepted for Proposal {
                        println!("invoke_action(), proposal_resolution [Committed] - validate_proposal_block FAILED");
                        Err(())
                 }
+
             },
             _ => {
                 Err(())

@@ -585,6 +585,7 @@ impl ProcessBlock for Block {
         // might want to just get the latest block....?
         //let current_block_id: Option<i64> = DB::get_latest_block_id();
         //let current_block_by_id: Option<Block> = DB::get_block_by_block_id( current_block_id.unwrap() );
+        //TODO: validate the block getting added is the child of the most recent block
         let previous_block_by_id: Option<Block> = DB::get_block_by_block_id(submitted_block.block_id - 1);
         if previous_block_by_id.clone().is_some() {
             //TODO: verify parent hash
