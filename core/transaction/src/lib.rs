@@ -690,7 +690,7 @@ impl Executable for Transaction {
         match &self.transaction_type {
             TransactionType::Output => {
                 // TODO MACRO USE!!!! CUSTOM_TRANSACTION_OUTPUT_LOGIC!()
-                println!("TX execute TX Output BEFORE: {} : ",  State::to_json( current_state_buffer.clone().unwrap() ) );
+                println!("TX execute() TX Output BEFORE: {} : ",  State::to_json( current_state_buffer.clone().unwrap() ) );
 
                 // TODO: create new address in state
                 let mut state_as_json: JsonValue = State::to_json(current_state_buffer.clone().unwrap());
@@ -702,7 +702,7 @@ impl Executable for Transaction {
             },
             TransactionType::Input => {
                 // TODO MACRO USE!!!! CUSTOM_TRANSACTION_INPUT_LOGIC!()
-                println!("TX execute TX Input");
+                println!("TX execute() TX Input BEFORE");
                 let mut state_as_json: JsonValue = State::to_json(current_state_buffer.clone().unwrap());
                 Executor::execute_transaction_input_logic(state_as_json,
                                                           self.transaction_timestamp.clone(),
@@ -711,7 +711,7 @@ impl Executable for Transaction {
                                                           self.transaction_data.clone())
             },
             TransactionType::TxTypeError => {
-                println!("TX execute ERROR: TxTypeError");
+                println!("TX execute() ERROR: TxTypeError");
                 State::to_json(current_state_buffer.clone().unwrap())
             }
         }
