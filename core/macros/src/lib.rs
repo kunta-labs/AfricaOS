@@ -84,11 +84,13 @@ macro_rules! transaction_output_logic {
                 if state_as_json.has_key( &(format!("{}", $tx_hash).to_string()) ) {
 
                     // just return state
+                    println!("TX execute TX Output 1 state_as_json has key: {}", &(format!("{}", $tx_hash).to_string()) );
                     $state
 
                 }else{
 
                     // check if code stored at the tx hash - specifically if the tx hash exists in state
+                    // TODO: might be redundant
                     if state_as_json.has_key( &(format!("{}", $tx_hash).to_string()) ) {
                         $state
                     }else{
@@ -127,6 +129,7 @@ macro_rules! transaction_output_logic {
 
                          // check if code stored at the tx hash
                          if state_as_json.has_key( &(format!("{}", $tx_hash).to_string()) ) {
+                             println!("TX execute TX Output 2 state_as_json has key: {}", &(format!("{}", $tx_hash).to_string()) );
                              $state
                          }else{
                              // state doesnt have tx_sender account, so insert
@@ -410,18 +413,21 @@ macro_rules! transaction_input_logic {
 
                         } else {
                             // partner tx doesnt exist in state
+                            println!("INPUT: ERROR partner tx doesnt exist in state:");
                             $state
                         }
 
 
 
                     }else{
+                        println!("INPUT: ERROR tx_partner_hash doesnt exist in state");
                         $state
                     }
                     //////////////////////
 
                 },
                 Err(_) => {
+                    println!("INPUT: ERROR JSON decode returned error ");
                     $state
                 }
             }

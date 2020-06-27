@@ -33,7 +33,7 @@ pub struct DB {
 pub trait NodeNameSetter {
     fn set_node_name(name: String) -> ();
 }
- 
+
 impl NodeNameSetter for DB {
     fn set_node_name(name: String) -> () {
         lazy_static! {
@@ -367,7 +367,7 @@ impl DBStateManager for DB {
         file.write( db_json_string.as_bytes() )?;
         let file_location2: String = format!("{}{}",
                                     STATES_LOC,
-                                    format!("state_{}.prop", 0));
+                                    format!("state_{}.state", 0));
         Self::write(db_json_string, file_location2);
         Ok(String::from("Ok, Successfully wrote DB JSON index FOR STATE"))
     }
