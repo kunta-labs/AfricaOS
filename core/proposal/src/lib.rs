@@ -757,7 +757,7 @@ trait HashProposal {
 
 impl HashProposal for Proposal {
     fn hash_proposal(calculated_proposal_id: i32, new_proposal_sender: String, ts: Timestamp) -> String {
-        // TODO: include
+        // TODO URGENT: include other variables when hashing proposal
         let raw_str: String = format!("{}{}{}", calculated_proposal_id, new_proposal_sender, ts.timestamp);
         let str_to_hash: &str = raw_str.as_str();
         let string_to_hash: String = String::from( str_to_hash );

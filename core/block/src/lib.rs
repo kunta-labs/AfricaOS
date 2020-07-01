@@ -342,7 +342,9 @@ trait HashBlock {
 
 impl HashBlock for Block {
     fn hash_block(block_id: i64, ts: Timestamp) -> String {
-        //TODO: include other properties
+
+        //TODO URGENT: include other properties when hashing block
+
         let raw_str: String = format!("{}{}", block_id, ts.timestamp);
         let str_to_hash: &str = raw_str.as_str();
         let string_to_hash: String = String::from( str_to_hash ) ;

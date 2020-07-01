@@ -1016,6 +1016,30 @@ impl API for Server {
                 if decoded_proposal_string.clone().is_ok() {
                     println!("invoke_action(), block received AFTER QUERING FOR IT - Success: queryied for block: {}", data);
                     //TODO: check if we have a proposal with that id
+
+                    /*
+                     PROBLEM:
+                     broadcast_block_query is invoked during:
+                        - node, AcceptedBroadcasted
+                        - node, RejectedBroadcasted
+                    So, upon a block query response, it immedietly tries to call
+                        - validate_proposal_block, which calls
+                            - commit_if_valid
+                    So, if Alice has the right ascenstor block, b,
+                    held by proposal, p, when it:
+                        - accepts a block,
+                        - and broadcasts it
+
+                    If will execute the same block more than once
+
+                    THEN! EVEN THOUGH the proposal status
+                    is changed, the loop in node has already
+                    loaded the proposals being used in the loop
+                    so it isnt updatingå the proposal about to be
+                    called next, p + 1
+                    This is why we don't see evidence of differing of TXs
+                    */
+
                     let decoded_proposal: Result<Proposal, String> = Proposal::from_json_string(decoded_proposal_string.unwrap());
                     match decoded_proposal {
                         Ok(mut proposal) => {
