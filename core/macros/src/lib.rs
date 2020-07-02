@@ -138,7 +138,7 @@ macro_rules! transaction_output_logic {
                                   Ok(_) => {
                                       //TODO: after we insert the initial state for the sender
                                       //current_state_buffer
-                                      println!("TX execute TX Output AFTER: {} : ",  state_as_json.clone()  );
+                                      println!("TX execute TX Output AFTER ELSE: {} : ",  state_as_json.clone()  );
                                       state_as_json
                                   },
                                   Err(_) => {

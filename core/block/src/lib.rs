@@ -610,6 +610,8 @@ impl ProcessBlock for Block {
                    .unwrap().block_id + 1) {
                 true => {
                     println!("process_nongenesis_block, SUBMITTED_BLOCK ID IS EQUAL TO MY BLOCK ID + 1, SUCCESS");
+                    //
+                    Transaction::execute_block_transactions(submitted_block.transactions);
                 },
                 false => {
                     println!("process_nongenesis_block, SUBMITTED_BLOCK ID IS [NOT] EQUAL TO MY BLOCK ID + 1, ERROR");
@@ -650,6 +652,7 @@ impl ProcessBlock for Block {
                                       */
                                       //return false
 
+
                                 },
                                 None => {
                                     println!("process_nongenesis_block, current_block_by_id_option is NONE");
@@ -672,7 +675,8 @@ impl ProcessBlock for Block {
             //TODO: verify block hash
             //TODO: CALL CHAIN LOGIC BLOCKVALIDATION
             //TODO: error handling
-            Transaction::execute_block_transactions(submitted_block.transactions);
+            //TODO: BUG THIS EXECUTE TX SITS OUTSIDE OF
+            //Transaction::execute_block_transactions(submitted_block.transactions);
             true
         } else {
             //current block by block id is NOT SOME
