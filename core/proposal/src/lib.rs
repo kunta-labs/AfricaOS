@@ -1169,7 +1169,17 @@ impl ValidateProposalBlock for Proposal {
         //////////// TODO: check if we already commited a proposal
         println!("validate_proposal_block: check if we commited already");
         //TODO SECURITY:
-        Block::commit_if_valid(self.clone().proposal_block)
+        let latest_proposal_option: Option<Proposal> = Self::get_latest_proposal();
+        match latest_proposal_option {
+            Some(proposal) => {
+                if (proposal.proposal_status != ProposalStatus::Committed) {
+                    Block::commit_if_valid(self.clone().proposal_block)
+                } else {
+                    Err(String::from("Error: validate_proposal_block, latest proposal is COMMITTED"))
+                }
+            },
+            None => Err(String::from("Error: validate_proposal_block, latest proposal option is None"))
+        }
     }
 }
 
