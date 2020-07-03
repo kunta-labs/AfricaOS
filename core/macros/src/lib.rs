@@ -120,6 +120,7 @@ macro_rules! transaction_output_logic {
             }else{
 
                 // state doesnt have tx_sender account, so insert
+                //TODO: setup default value
                 match &state_as_json.insert( &( format!("{}", $tx_sender).to_string() ),
                                                 format!("{}", 0) ) {
                      Ok(_) => {
