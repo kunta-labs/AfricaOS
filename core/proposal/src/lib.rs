@@ -22,7 +22,8 @@ use db::{DB,
          DBReadProposal,
          FileDirectoryReader,
          DBReadProposalPeerStatus,
-         DBWriteProposalPeerStatus};
+         DBWriteProposalPeerStatus,
+         LogDebug};
 
 use block::{Block,
             CreateNewBlock,
@@ -1173,7 +1174,10 @@ impl ValidateProposalBlock for Proposal {
         match latest_proposal_option {
             Some(proposal) => {
                 if (proposal.proposal_status != ProposalStatus::Committed) {
+
+                    DB::write_proposal_debug( String::from( format!("trying to commit proposal: {} With block ID {}", self.clone().proposal_id, self.clone().proposal_block.block_id) ) );
                     Block::commit_if_valid(self.clone().proposal_block)
+
                 } else {
                     Err(String::from("Error: validate_proposal_block, latest proposal is COMMITTED"))
                 }

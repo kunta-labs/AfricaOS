@@ -27,7 +27,8 @@ use transaction::{Transaction,
 use db::{DB,
          DBWriteBlock,
          DBReadBlock,
-         FileDirectoryReader};
+         FileDirectoryReader,
+         LogDebug};
 
 use hash::{Hasher, CalculateSHA256Hash};
 
@@ -562,6 +563,7 @@ impl ValidateAcceptedProposalBlock for Block {
     }
 }
 
+
 /*
     @name process block
 */
@@ -618,8 +620,10 @@ impl ProcessBlock for Block {
                                     //ONLY EXECUTE if submitted block is equal to latest block + 1
                                     if ( submitted_block.clone().block_id == (latest_block_id + 1) ){
                                         // THIS ONLY EXECUTES WHEN the submitted block is the correct valid anscestor
+                                        DB::write_transaction_debug( String::from( format!("Execute all txs in block: {}", submitted_block.clone().block_id) ) );
                                         Transaction::execute_block_transactions(submitted_block.transactions);
                                         return true
+
                                     }else{
                                         println!("process_nongenesis_block, latest_block_id + 1 is NOT equal to submitted_block.block_id");
                                         return false

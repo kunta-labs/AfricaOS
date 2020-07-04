@@ -21,7 +21,8 @@ use db::{DB,
          DBReadTransaction,
          FileDirectoryReader,
          DBWriteTransaction,
-         DBStateManager};
+         DBStateManager,
+         LogDebug};
 use std::io::{Error, ErrorKind};
 use timestamp::{Timestamp, NewTimestamp, StringToTimestamp};
 use hash::{Hasher, CalculateSHA256Hash};
@@ -655,6 +656,7 @@ impl ExecuteTransactions for Transaction {
                 // iterate over each transaction
                 transactions.iter().for_each( | tx | {
                     println!( "execute_block_transactions(), BEFORE json_state_buffer OVERWRITE: {}", json_state_buffer.clone() );
+                    DB::write_transaction_debug( String::from( format!("tx individual execution: {}", tx.transaction_hash) ) );
                     json_state_buffer = tx.execute( &Some( State::to_state( json_state_buffer.clone() ) ) );
                     println!("execute_block_transactions(),  AFTER json_state_buffer OVERWRITE: {}", json_state_buffer.clone() );
                 });
