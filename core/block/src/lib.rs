@@ -620,7 +620,7 @@ impl ProcessBlock for Block {
                                     //ONLY EXECUTE if submitted block is equal to latest block + 1
                                     if ( submitted_block.clone().block_id == (latest_block_id + 1) ){
                                         // THIS ONLY EXECUTES WHEN the submitted block is the correct valid anscestor
-                                        DB::write_transaction_debug( String::from( format!("Execute all txs in block: {}", submitted_block.clone().block_id) ) );
+                                        DB::write_block_debug( String::from( format!("Execute all txs in block: {}", submitted_block.clone().block_id) ) );
                                         Transaction::execute_block_transactions(submitted_block.transactions);
                                         return true
 

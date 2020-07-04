@@ -151,6 +151,8 @@ impl Initiate for Node {
         //create state database
         State::create_state_db();
 
+        //TODO: CREATE DEBUG LOG FILES
+
         Node {
             node_name: node_name,
             node_id: node_id,
