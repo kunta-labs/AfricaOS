@@ -637,12 +637,36 @@ impl FileDirectoryReader for DB {
     @name debug_block
 */
 pub trait LogDebug {
+    fn create_debug_log_files() -> ();
     fn write_block_debug(content: String) -> ();
     fn write_proposal_debug(content: String) -> ();
     fn write_transaction_debug(content: String) -> ();
 }
 
 impl LogDebug for DB {
+
+    fn create_debug_log_files() -> (){
+        println!("DB, write_transaction_index: Attempting to Write DB JSON INDEX for tx");
+
+        // block
+        const BLOCK_DEBUG_LOG: &str = "storage/BLOCK_DEBUG";
+        let file_location_block: String = format!("{}",BLOCK_DEBUG_LOG);
+        Self::write( String::from(""), file_location_block);
+        //Ok(String::from("Ok, Successfully created block debug file"));
+
+        //proposal
+        const PROPOSAL_DEBUG_LOG: &str = "storage/PROPOSAL_DEBUG";
+        let file_location_proposal: String = format!("{}",PROPOSAL_DEBUG_LOG);
+        Self::write( String::from(""), file_location_proposal);
+        //Ok(String::from("Ok, Successfully created block debug file"));
+
+        //transaction
+        const TRANSACTION_DEBUG_LOG: &str = "storage/TRANSACTION_DEBUG";
+        let file_location_transaction: String = format!("{}",TRANSACTION_DEBUG_LOG);
+        Self::write( String::from(""), file_location_transaction);
+        //Ok(String::from("Ok, Successfully created block debug file"));
+    }
+
     fn write_block_debug(content: String) -> (){
         const BLOCK_DEBUG_LOG: &str = "storage/BLOCK_DEBUG";
         let mut file = OpenOptions::new()

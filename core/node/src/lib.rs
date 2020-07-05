@@ -18,7 +18,7 @@ extern crate json;
 use json::{JsonValue};
 use network::{Server,Receiver,Transmitter};
 use transaction::{Transaction};
-use db::{DB, NodeNameSetter};
+use db::{DB, NodeNameSetter, LogDebug};
 use proposal::{Proposal,
                NewProposal,
                ReadProposalFromDB,
@@ -152,6 +152,7 @@ impl Initiate for Node {
         State::create_state_db();
 
         //TODO: CREATE DEBUG LOG FILES
+        DB::create_debug_log_files();
 
         Node {
             node_name: node_name,
