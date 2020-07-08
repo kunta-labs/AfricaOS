@@ -84,11 +84,13 @@ macro_rules! transaction_output_logic {
                 if state_as_json.has_key( &(format!("{}", $tx_hash).to_string()) ) {
 
                     // just return state
+                    println!("TX execute TX Output 1 state_as_json has key: {}", &(format!("{}", $tx_hash).to_string()) );
                     $state
 
                 }else{
 
                     // check if code stored at the tx hash - specifically if the tx hash exists in state
+                    // TODO: might be redundant
                     if state_as_json.has_key( &(format!("{}", $tx_hash).to_string()) ) {
                         $state
                     }else{
@@ -118,6 +120,7 @@ macro_rules! transaction_output_logic {
             }else{
 
                 // state doesnt have tx_sender account, so insert
+                //TODO: setup default value
                 match &state_as_json.insert( &( format!("{}", $tx_sender).to_string() ),
                                                 format!("{}", 0) ) {
                      Ok(_) => {
@@ -127,6 +130,7 @@ macro_rules! transaction_output_logic {
 
                          // check if code stored at the tx hash
                          if state_as_json.has_key( &(format!("{}", $tx_hash).to_string()) ) {
+                             println!("TX execute TX Output 2 state_as_json has key: {}", &(format!("{}", $tx_hash).to_string()) );
                              $state
                          }else{
                              // state doesnt have tx_sender account, so insert
@@ -135,7 +139,7 @@ macro_rules! transaction_output_logic {
                                   Ok(_) => {
                                       //TODO: after we insert the initial state for the sender
                                       //current_state_buffer
-                                      println!("TX execute TX Output AFTER: {} : ",  state_as_json.clone()  );
+                                      println!("TX execute TX Output AFTER ELSE: {} : ",  state_as_json.clone()  );
                                       state_as_json
                                   },
                                   Err(_) => {
@@ -181,7 +185,7 @@ macro_rules! transaction_input_logic {
                 Ok(decoded) => {
 
                     ///////////////////
-                    println!("decoded 1: {}", decoded);
+                    println!("INPUT: decoded 1: {}", decoded);
 
 
                     let tx_sections: Vec<&str> = decoded.split(" ").collect::<Vec<_>>();
@@ -198,12 +202,12 @@ macro_rules! transaction_input_logic {
                         // if partner hash exists
                         if partner_tx.clone().is_some() {
 
-                            println!("partner tx: {}", partner_tx.unwrap());
+                            println!("INPUT: partner tx: {}", partner_tx.unwrap());
 
                             //let b64_decoded_partner: Result<String, String> = Encoder::decode_base64($tx_data);
                             let b64_decoded_partner: String = Encoder::decode_base64( String::from( partner_tx.clone().unwrap() ) ).unwrap();
 
-                            println!("b64_decoded_partner: {}", b64_decoded_partner);
+                            println!("INPUT: b64_decoded_partner: {}", b64_decoded_partner);
 
                             let partner_tx_sections: Vec<&str> = b64_decoded_partner.split(" ").collect::<Vec<_>>();
                             // let partner_tx_sender: String = String::from(partner_tx_sections[0]);
@@ -243,7 +247,7 @@ macro_rules! transaction_input_logic {
                                                 //let state_account_amount: Option<i32> = state_as_json[ $tx_sender.clone() ].as_i32();
                                                 let state_account_amount: &JsonValue = &state_as_json[ $tx_sender.clone() ];
                                                 let parsed_string_state_account_amount: String = state_account_amount.to_string();
-                                                println!("parsed_string_state_account_amount: {}", parsed_string_state_account_amount);
+                                                println!("INPUT: parsed_string_state_account_amount: {}", parsed_string_state_account_amount);
                                                 let amount_i32_account: Result<i32, std::num::ParseIntError> = parsed_string_state_account_amount.parse::<i32>();
 
                                                 //parse partner amount
@@ -255,7 +259,7 @@ macro_rules! transaction_input_logic {
                                                 ////////////
                                                 let state_partner_amount: &JsonValue = &state_as_json[ partner_tx_sender.clone() ];
                                                 let parsed_string_state_partner_amount: String = state_partner_amount.to_string();
-                                                println!("parsed_string_state_partner_amount: {}", parsed_string_state_partner_amount);
+                                                println!("INPUT: parsed_string_state_partner_amount: {}", parsed_string_state_partner_amount);
                                                 let amount_i32_partner: Result<i32, std::num::ParseIntError> = parsed_string_state_partner_amount.parse::<i32>();
                                                 ///////////
 
@@ -285,6 +289,10 @@ macro_rules! transaction_input_logic {
                                                     // state_as_json[$tx_sender] = JsonValue::from( state_account_amount.unwrap() + partner_tx_amount_parse_result.clone().unwrap() );
                                                     // state_as_json[partner_tx_sender] = JsonValue::from( state_partner_amount.unwrap() - partner_tx_amount_parse_result.unwrap() );
 
+                                                    println!("input: partner_tx_amount_parse_result: {} ", partner_tx_amount_parse_result.clone().unwrap());
+                                                    println!("input: amount_i32_account: {} ", amount_i32_account.clone().unwrap());
+                                                    println!("input: amount_i32_partner: {} ", amount_i32_partner.clone().unwrap());
+
                                                     match &state_as_json.insert( &( format!("{}", $tx_sender ).to_string() ),
                                                                                     //format!("{}", JsonValue::from( state_account_amount.unwrap() + partner_tx_amount_parse_result.clone().unwrap() ) ) ) {
                                                                                     format!("{}", JsonValue::from( amount_i32_account.unwrap() + partner_tx_amount_parse_result.clone().unwrap() ) ) ) {
@@ -296,12 +304,12 @@ macro_rules! transaction_input_logic {
                                                                   Ok(_) => {
                                                                       //TODO: after we insert the initial state for the sender
                                                                       //current_state_buffer
-                                                                      println!("TX execute TX Output AFTER: {} : ",  state_as_json.clone()  );
+                                                                      println!("INPUT: TX execute TX INPUT AFTER: {} : ",  state_as_json.clone()  );
                                                                       state_as_json
                                                                   },
                                                                   Err(_) => {
                                                                       // error on inserting, return current state
-                                                                      println!("TX execute ERROR: State::to_json is NOT okay: {} ", $state.clone() );
+                                                                      println!("INPUT: TX execute ERROR: State::to_json is NOT okay: {} ", $state.clone() );
                                                                       $state
                                                                   }
                                                              }
@@ -315,7 +323,7 @@ macro_rules! transaction_input_logic {
                                                     }
 
                                                 }else{
-                                                    println!("transaction_input_logic: first condition else");
+                                                    println!("INPUT: transaction_input_logic: first condition else");
                                                     $state
                                                 }
 
@@ -327,7 +335,7 @@ macro_rules! transaction_input_logic {
                                                 //parse partner amount
                                                 let partner_tx_amount_parse_result: Result<i32, std::num::ParseIntError> = partner_amount_section.parse::<i32>();
 
-                                                println!("state: {} {} {}", state_as_json.dump(),
+                                                println!("INPUT: state: {} {} {}", state_as_json.dump(),
                                                                             $tx_sender.clone(),
                                                                             partner_tx_sender.clone());
 
@@ -336,7 +344,7 @@ macro_rules! transaction_input_logic {
 
                                                 let parsed_string: String = state_partner_amount.to_string();
 
-                                                println!("parsed_string: {}", parsed_string);
+                                                println!("INPUT: parsed_string: {}", parsed_string);
 
                                                 let amount_i32: Result<i32, std::num::ParseIntError> = parsed_string.parse::<i32>();
 
@@ -361,12 +369,12 @@ macro_rules! transaction_input_logic {
                                                                   Ok(_) => {
                                                                       //TODO: after we insert the initial state for the sender
                                                                       //current_state_buffer
-                                                                      println!("TX execute TX Output AFTER: {} : ",  state_as_json.clone()  );
+                                                                      println!("INPUT: TX execute TX Input AFTER: {} : ",  state_as_json.clone()  );
                                                                       state_as_json
                                                                   },
                                                                   Err(_) => {
                                                                       // error on inserting, return current state
-                                                                      println!("TX execute ERROR: State::to_json is NOT okay: {} ", $state.clone() );
+                                                                      println!("INPUT: TX execute ERROR: State::to_json is NOT okay: {} ", $state.clone() );
                                                                       $state
                                                                   }
                                                              }
@@ -374,14 +382,14 @@ macro_rules! transaction_input_logic {
                                                          },
                                                          Err(_) => {
                                                              // error on inserting, return current state
-                                                             println!("TX execute ERROR: State::to_json is NOT okay: {} ", $state.clone() );
+                                                             println!("INPUT: TX execute ERROR: State::to_json is NOT okay: {} ", $state.clone() );
                                                              $state
                                                          }
                                                     }
 
                                                 }else{
 
-                                                    println!("partner_amount_parse_result is not ok");
+                                                    println!("INPUT: partner_amount_parse_result is not ok");
                                                     $state
 
                                                 }
@@ -391,7 +399,7 @@ macro_rules! transaction_input_logic {
                                         },
 
                                         Err(_) => {
-                                            println!("SIGNATURE VERIFICATION FAILED");
+                                            println!("INPUT: SIGNATURE VERIFICATION FAILED");
                                             $state
                                         }
 
@@ -399,25 +407,28 @@ macro_rules! transaction_input_logic {
 
                                 },
                                 Err(error_message) => {
-                                    println!("ERROR: {}", error_message);
+                                    println!("INPUT: ERROR: {}", error_message);
                                     $state
                                 }
                             }
 
                         } else {
                             // partner tx doesnt exist in state
+                            println!("INPUT: ERROR partner tx doesnt exist in state:");
                             $state
                         }
 
 
 
                     }else{
+                        println!("INPUT: ERROR tx_partner_hash doesnt exist in state");
                         $state
                     }
                     //////////////////////
 
                 },
                 Err(_) => {
+                    println!("INPUT: ERROR JSON decode returned error ");
                     $state
                 }
             }

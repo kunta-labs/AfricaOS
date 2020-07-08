@@ -22,7 +22,8 @@ use db::{DB,
          DBReadProposal,
          FileDirectoryReader,
          DBReadProposalPeerStatus,
-         DBWriteProposalPeerStatus};
+         DBWriteProposalPeerStatus,
+         LogDebug};
 
 use block::{Block,
             CreateNewBlock,
@@ -65,6 +66,7 @@ pub enum ProposalStatus {
     Rejected,   //proposal rejected by peers
     RejectedBroadcasted,   //proposal rejected by a node AND BROADCASTED
     RejectedByNetwork,   //proposal rejected by peervalidate_proposals, AND BROADCASTED
+    PreCommit,   //PRECOMMIT
     Committed,   //proposal agreed upon by peers
     NotValid,    //proposals that do not match any of the above enum values
     NotValidIncorrectNextBlockIndex,    //proposals that do not have the correct next block index
@@ -88,6 +90,7 @@ impl StatusToString for Proposal {
             ProposalStatus::RejectedBroadcasted    => "rejected_broadcasted",
             ProposalStatus::RejectedByNetwork    => "rejected_by_network",
             ProposalStatus::Committed    => "committed",
+            ProposalStatus::PreCommit    => "precommit",
             ProposalStatus::NotValid    => "notvalid",
             ProposalStatus::NotValidIncorrectNextBlockIndex => "not_valid_incorrect_next_block_id",
             ProposalStatus::NotValidIncorrectProposalHash => "not_valid_incorrect_proposal_hash",
@@ -120,6 +123,7 @@ impl StringToStatus for Proposal {
             "rejected_broadcasted" =>   ProposalStatus::RejectedBroadcasted,
             "rejected_by_network" =>   ProposalStatus::RejectedByNetwork,
             "committed" =>   ProposalStatus::Committed,
+            "precommit" =>   ProposalStatus::PreCommit,
             "notvalid" =>            ProposalStatus::NotValid,
             "not_valid_incorrect_next_block_id" => ProposalStatus::NotValidIncorrectNextBlockIndex,
             "not_valid_incorrect_proposal_hash" => ProposalStatus::NotValidIncorrectProposalHash,
@@ -754,6 +758,7 @@ trait HashProposal {
 
 impl HashProposal for Proposal {
     fn hash_proposal(calculated_proposal_id: i32, new_proposal_sender: String, ts: Timestamp) -> String {
+        // TODO URGENT: include other variables when hashing proposal
         let raw_str: String = format!("{}{}{}", calculated_proposal_id, new_proposal_sender, ts.timestamp);
         let str_to_hash: &str = raw_str.as_str();
         let string_to_hash: String = String::from( str_to_hash );
@@ -795,6 +800,9 @@ impl NewProposal for Proposal {
         match new_proposal_timestamp {
             Some(ts) => {
                 let new_proposal_sender: String = request_origin;
+
+                // TODO: only hashing proposal id, sender, and timestamp.
+                // TODO: must add other components
                 let new_proposal_hash: String = Self::hash_proposal(calculated_proposal_id.clone(), new_proposal_sender.clone(), ts.clone());
                 //TODO: CREATE NEW BLOCK
                 let new_proposal_block: Result<Block, String> = Block::new(new_proposal_hash.clone());
@@ -1162,7 +1170,20 @@ impl ValidateProposalBlock for Proposal {
         //////////// TODO: check if we already commited a proposal
         println!("validate_proposal_block: check if we commited already");
         //TODO SECURITY:
-        Block::commit_if_valid(self.clone().proposal_block)
+        let latest_proposal_option: Option<Proposal> = Self::get_latest_proposal();
+        match latest_proposal_option {
+            Some(proposal) => {
+                if (proposal.proposal_status != ProposalStatus::Committed) {
+
+                    DB::write_proposal_debug( String::from( format!("trying to commit proposal: {} With block ID {}", self.clone().proposal_id, self.clone().proposal_block.block_id) ) );
+                    Block::commit_if_valid(self.clone().proposal_block)
+
+                } else {
+                    Err(String::from("Error: validate_proposal_block, latest proposal is COMMITTED"))
+                }
+            },
+            None => Err(String::from("Error: validate_proposal_block, latest proposal option is None"))
+        }
     }
 }
 
@@ -1207,6 +1228,7 @@ impl ProposalResolutionAccepted for Proposal {
                 println!("invoke_action(), proposal_resolution - received_proposal STATUS IS Commited");
 
                 //TODO: WE ACCEPTED IT, BROADCASTED IT AND WE JUST RECEIVED A RESOLUTION
+                // TODO: REMOVE CUZ TX ARE GETTING EXECUTED MORE THAN ONCE
                 if received_proposal
                    .clone()
                    .validate_proposal_block()
@@ -1217,6 +1239,7 @@ impl ProposalResolutionAccepted for Proposal {
                        println!("invoke_action(), proposal_resolution [Committed] - validate_proposal_block FAILED");
                        Err(())
                 }
+
             },
             _ => {
                 Err(())

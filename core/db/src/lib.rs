@@ -25,6 +25,9 @@ use std::io::{Write, Error, ErrorKind};
 use lock::{Locker, FileLockWrite};
 use json::{JsonValue};
 
+//Debug
+use std::fs::OpenOptions;
+use std::io::prelude::*;
 
 pub struct DB {
 
@@ -33,7 +36,7 @@ pub struct DB {
 pub trait NodeNameSetter {
     fn set_node_name(name: String) -> ();
 }
- 
+
 impl NodeNameSetter for DB {
     fn set_node_name(name: String) -> () {
         lazy_static! {
@@ -78,6 +81,7 @@ const STATES_DB_LOC: &str = "storage/states.db";
 */
 const BLOCKS_LOC: &str = "storage/chain/";
 const BLOCKS_DB_LOC: &str = "storage/chain.db";
+
 
 pub trait DBInit{
     fn create_sql_databases() -> Result<(), std::io::Error>;
@@ -367,7 +371,7 @@ impl DBStateManager for DB {
         file.write( db_json_string.as_bytes() )?;
         let file_location2: String = format!("{}{}",
                                     STATES_LOC,
-                                    format!("state_{}.prop", 0));
+                                    format!("state_{}.state", 0));
         Self::write(db_json_string, file_location2);
         Ok(String::from("Ok, Successfully wrote DB JSON index FOR STATE"))
     }
@@ -626,6 +630,80 @@ impl FileDirectoryReader for DB {
             file_vector.push(path.unwrap().path().display().to_string());
         }
         file_vector
+    }
+}
+
+/*
+    @name debug_block
+*/
+pub trait LogDebug {
+    fn create_debug_log_files() -> ();
+    fn write_block_debug(content: String) -> ();
+    fn write_proposal_debug(content: String) -> ();
+    fn write_transaction_debug(content: String) -> ();
+}
+
+impl LogDebug for DB {
+
+    fn create_debug_log_files() -> (){
+        println!("DB, write_transaction_index: Attempting to Write DB JSON INDEX for tx");
+
+        // block
+        const BLOCK_DEBUG_LOG: &str = "storage/BLOCK_DEBUG";
+        let file_location_block: String = format!("{}",BLOCK_DEBUG_LOG);
+        Self::write( String::from(""), file_location_block);
+        //Ok(String::from("Ok, Successfully created block debug file"));
+
+        //proposal
+        const PROPOSAL_DEBUG_LOG: &str = "storage/PROPOSAL_DEBUG";
+        let file_location_proposal: String = format!("{}",PROPOSAL_DEBUG_LOG);
+        Self::write( String::from(""), file_location_proposal);
+        //Ok(String::from("Ok, Successfully created block debug file"));
+
+        //transaction
+        const TRANSACTION_DEBUG_LOG: &str = "storage/TRANSACTION_DEBUG";
+        let file_location_transaction: String = format!("{}",TRANSACTION_DEBUG_LOG);
+        Self::write( String::from(""), file_location_transaction);
+        //Ok(String::from("Ok, Successfully created block debug file"));
+    }
+
+    fn write_block_debug(content: String) -> (){
+        const BLOCK_DEBUG_LOG: &str = "storage/BLOCK_DEBUG";
+        let mut file = OpenOptions::new()
+            .write(true)
+            .append(true)
+            .open(BLOCK_DEBUG_LOG)
+            .unwrap();
+
+        if let Err(e) = writeln!(file, "{}", content.as_str()) {
+            eprintln!("Couldn't write to block file: {}", e);
+        }
+    }
+
+    fn write_proposal_debug(content: String) -> (){
+        const PROPOSAL_DEBUG_LOG: &str = "storage/PROPOSAL_DEBUG";
+        let mut file = OpenOptions::new()
+            .write(true)
+            .append(true)
+            .open(PROPOSAL_DEBUG_LOG)
+            .unwrap();
+
+        if let Err(e) = writeln!(file, "{}", content.as_str()) {
+            eprintln!("Couldn't write to proposal file: {}", e);
+        }
+    }
+
+    fn write_transaction_debug(content: String) -> (){
+        const TRANSACTION_DEBUG_LOG: &str = "storage/TRANSACTION_DEBUG";
+        let mut file = OpenOptions::new()
+            .write(true)
+            .append(true)
+            .open(TRANSACTION_DEBUG_LOG)
+            .unwrap();
+
+        if let Err(e) = writeln!(file, "{}", content.as_str()) {
+            eprintln!("Couldn't write to transaction file: {}", e);
+        }
     }
 }
 

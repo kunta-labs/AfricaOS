@@ -27,7 +27,8 @@ use transaction::{Transaction,
 use db::{DB,
          DBWriteBlock,
          DBReadBlock,
-         FileDirectoryReader};
+         FileDirectoryReader,
+         LogDebug};
 
 use hash::{Hasher, CalculateSHA256Hash};
 
@@ -342,6 +343,9 @@ trait HashBlock {
 
 impl HashBlock for Block {
     fn hash_block(block_id: i64, ts: Timestamp) -> String {
+
+        //TODO URGENT: include other properties when hashing block
+
         let raw_str: String = format!("{}{}", block_id, ts.timestamp);
         let str_to_hash: &str = raw_str.as_str();
         let string_to_hash: String = String::from( str_to_hash ) ;
@@ -381,6 +385,7 @@ impl CreateNewBlock for Block {
             Some(ts) => {
                 Ok(Block {
                     block_id: new_block_id,
+                    // TODO: Transaction::json_from_tx_vec()
                     block_hash: Self::hash_block(new_block_id, ts.clone()),
                     block_parent_hash: parent_hash,
                     block_time: ts,
@@ -558,6 +563,7 @@ impl ValidateAcceptedProposalBlock for Block {
     }
 }
 
+
 /*
     @name process block
 */
@@ -583,13 +589,113 @@ impl ProcessBlock for Block {
         // might want to just get the latest block....?
         //let current_block_id: Option<i64> = DB::get_latest_block_id();
         //let current_block_by_id: Option<Block> = DB::get_block_by_block_id( current_block_id.unwrap() );
+        //TODO: validate the block getting added is the child of the most recent block
         let previous_block_by_id: Option<Block> = DB::get_block_by_block_id(submitted_block.block_id - 1);
         if previous_block_by_id.clone().is_some() {
             //TODO: verify parent hash
             match Self::verify_block_anscestry(previous_block_by_id.clone().unwrap(),
                                                submitted_block.clone()) {
                 true => {
+
+
                     println!("process_nongenesis_block, verify_block_anscestry, SUCCESS");
+
+                    //TODO: Self.verify_block_id(submitted_block, current_block_by_id);
+                    //TODO: REDUNDANT FOR SUBMITTED BLOCK ID?
+
+                    match submitted_block.clone().block_id
+                          ==
+                          (previous_block_by_id
+                           .clone()
+                           .unwrap().block_id + 1) {
+                        true => {
+
+                            println!("process_nongenesis_block, SUBMITTED_BLOCK ID IS EQUAL TO MY BLOCK ID + 1, SUCCESS");
+
+                            // TODO: get latest block
+                            let latest_block_id_option: Option<i64> = DB::get_latest_block_id();
+                            match latest_block_id_option {
+                                Some(latest_block_id) => {
+
+                                    //ONLY EXECUTE if submitted block is equal to latest block + 1
+                                    if ( submitted_block.clone().block_id == (latest_block_id + 1) ){
+                                        // THIS ONLY EXECUTES WHEN the submitted block is the correct valid anscestor
+                                        DB::write_block_debug( String::from( format!("Execute all txs in block: {}", submitted_block.clone().block_id) ) );
+                                        Transaction::execute_block_transactions(submitted_block.transactions);
+                                        return true
+
+                                    }else{
+                                        println!("process_nongenesis_block, latest_block_id + 1 is NOT equal to submitted_block.block_id");
+                                        return false
+                                    }
+
+                                },
+                                None => {
+                                    println!("process_nongenesis_block, latest_block_id option is NONE");
+                                    return false
+                                }
+                            }
+
+
+
+                        },
+                        false => {
+                            println!("process_nongenesis_block, SUBMITTED_BLOCK ID IS [NOT] EQUAL TO MY BLOCK ID + 1, ERROR");
+                            //TODO modularize out into a is_valid_current_block(submitted_block)
+                            let current_block_id_option: Option<i64> = DB::get_latest_block_id();  // Get my latest block
+                            match current_block_id_option {
+                                Some(current_block_id) => {
+                                    let current_block_by_id_option: Option<Block> = DB::get_block_by_block_id(current_block_id);
+                                    match current_block_by_id_option {
+                                        Some(current_block_by_id) => {
+
+                                              // if block ids are the same
+                                              // match ( submitted_block.clone().block_id == (current_block_by_id.clone().block_id) )
+                                              //       &&
+                                              //       // if the parent hashes are the same
+                                              //       ( submitted_block.clone().block_parent_hash == current_block_by_id.clone().block_parent_hash )
+                                              //       &&
+                                              //       // different block hashes
+                                              //       ( submitted_block.clone().block_hash != current_block_by_id.clone().block_hash ) {
+                                              //     true => {
+                                              //         println!("process_nongenesis_block, BLOCK ID MATCH MY TOP BLOCK, AND PARENT HASHES MATCH, and BLOCK HASHES ARE NOT THE SAME - SUCCESS");
+                                              //     },
+                                              //     false => {
+                                              //         println!("process_nongenesis_block ERROR!, BLOCK ID MATCH MY TOP, BLOCK AND PARENT HASHES DONT MATCH, and BLOCK HASHES ARE NOT THE SAME - ERROR");
+                                              //         return false
+                                              //     }
+                                              // }
+
+                                              /*
+                                              match current_block {
+                                                  _ if current_block.block_hash == proposed_block.block_parent_hash => {
+                                                      true
+                                                  },
+                                                  _ => {
+                                                      false
+                                                  }
+                                              }
+                                              */
+                                              //return false
+
+
+                                        },
+                                        None => {
+                                            println!("process_nongenesis_block, current_block_by_id_option is NONE");
+                                            return false
+                                        }
+                                    }
+                                },
+                                //current_block_id_option is NONE
+                                None => {
+                                    println!("process_nongenesis_block, current_block_id_option is NONE");
+                                    return false
+                                }
+
+                            }
+                        }
+                    }
+
                 },
                 false => {
                     println!("process_nongenesis_block, verify_block_anscestry, ERROR");
@@ -597,77 +703,15 @@ impl ProcessBlock for Block {
                 }
             }
 
-            //TODO: Self.verify_block_id(submitted_block, current_block_by_id);
-            match submitted_block.clone().block_id
-                  ==
-                  (previous_block_by_id
-                   .clone()
-                   .unwrap().block_id + 1) {
-                true => {
-                    println!("process_nongenesis_block, SUBMITTED_BLOCK ID IS EQUAL TO MY BLOCK ID + 1, SUCCESS");
-                },
-                false => {
-                    println!("process_nongenesis_block, SUBMITTED_BLOCK ID IS [NOT] EQUAL TO MY BLOCK ID + 1, ERROR");
-                    //TODO modularize out into a is_valid_current_block(submitted_block)
-                    let current_block_id_option: Option<i64> = DB::get_latest_block_id();  // Get my latest block
-                    match current_block_id_option {
-                        Some(current_block_id) => {
-                            let current_block_by_id_option: Option<Block> = DB::get_block_by_block_id(current_block_id);
-                            match current_block_by_id_option {
-                                Some(current_block_by_id) => {
 
-                                      // if block ids are the same
-                                      // match ( submitted_block.clone().block_id == (current_block_by_id.clone().block_id) )
-                                      //       &&
-                                      //       // if the parent hashes are the same
-                                      //       ( submitted_block.clone().block_parent_hash == current_block_by_id.clone().block_parent_hash )
-                                      //       &&
-                                      //       // different block hashes
-                                      //       ( submitted_block.clone().block_hash != current_block_by_id.clone().block_hash ) {
-                                      //     true => {
-                                      //         println!("process_nongenesis_block, BLOCK ID MATCH MY TOP BLOCK, AND PARENT HASHES MATCH, and BLOCK HASHES ARE NOT THE SAME - SUCCESS");
-                                      //     },
-                                      //     false => {
-                                      //         println!("process_nongenesis_block ERROR!, BLOCK ID MATCH MY TOP, BLOCK AND PARENT HASHES DONT MATCH, and BLOCK HASHES ARE NOT THE SAME - ERROR");
-                                      //         return false
-                                      //     }
-                                      // }
-
-                                      /*
-                                      match current_block {
-                                          _ if current_block.block_hash == proposed_block.block_parent_hash => {
-                                              true
-                                          },
-                                          _ => {
-                                              false
-                                          }
-                                      }
-                                      */
-                                      //return false
-
-                                },
-                                None => {
-                                    println!("process_nongenesis_block, current_block_by_id_option is NONE");
-                                    return false
-                                }
-                            }
-                        },
-                        //current_block_id_option is NONE
-                        None => {
-                            println!("process_nongenesis_block, current_block_id_option is NONE");
-                            return false
-                        }
-
-                    }
-                }
-            }
 
             //TODO: MACRO: CUSTOM_BLOCK_VALIDATION!()
             // AFTER CHECKING IF BLOCK ID IS RIGHT SEQUENCE
             //TODO: verify block hash
             //TODO: CALL CHAIN LOGIC BLOCKVALIDATION
             //TODO: error handling
-            Transaction::execute_block_transactions(submitted_block.transactions);
+            //TODO: BUG THIS EXECUTE TX SITS OUTSIDE OF
+            //Transaction::execute_block_transactions(submitted_block.transactions);
             true
         } else {
             //current block by block id is NOT SOME

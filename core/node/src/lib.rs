@@ -18,7 +18,7 @@ extern crate json;
 use json::{JsonValue};
 use network::{Server,Receiver,Transmitter};
 use transaction::{Transaction};
-use db::{DB, NodeNameSetter};
+use db::{DB, NodeNameSetter, LogDebug};
 use proposal::{Proposal,
                NewProposal,
                ReadProposalFromDB,
@@ -150,6 +150,9 @@ impl Initiate for Node {
 
         //create state database
         State::create_state_db();
+
+        //TODO: CREATE DEBUG LOG FILES
+        DB::create_debug_log_files();
 
         Node {
             node_name: node_name,
@@ -527,8 +530,10 @@ impl StateTransition for Node {
                 match local_block_id_option {
                     Some(local_block_id) => { // successfuly fetch block id
 
-                        //*** test remove: do we need to broadcast a block query upon reaching a proposal we already broadcasted
+                        /* test remove: do we need to broadcast a block query upon reaching a proposal we already broadcasted */
+                        /*
                         for peer in self.peers.clone().peer_set {
+
                             if Server::broadcast_block_query( ( local_block_id ),
                                                                peer.clone().location,
                                                                node_ip.clone()).is_ok() {
@@ -537,7 +542,9 @@ impl StateTransition for Node {
                             } else {
                                 println!("[determine_transition_step], broadcast_block_query FAILED 1...");
                             }
+
                         }
+                        */
 
 
                     },
@@ -571,31 +578,52 @@ impl StateTransition for Node {
                 //TODO: MY PROPOSAL WAS ACCEPTED BY NETWORK
                 //TODO: BROACAST TO ALL PEERS THAT WE ARE NOW
                 println!("[determine_transition_step], accepted_by_network...");
-                let block_commit_result: Result<(),String> = Block::commit_if_valid(proposal.clone().proposal_block);
-                if block_commit_result.is_ok() {
 
-                    for peer in self.peers.clone().peer_set {
-                        //TODO: decide who we should broadcast to
-                        if Server::broadcast_proposal_resolution(proposal.clone(),
-                                                              peer.clone().location,
-                                                              node_ip.clone()).is_ok() {
-                            println!("[determine_transition_step], broadcast_proposal_resolution SUCCESS...");
-                            //TODO: update proposal to committed status if
+
+                let latest_proposal_option: Option<Proposal> = Proposal::get_latest_proposal();
+                match latest_proposal_option {
+                    Some(latest_proposal) => {
+
+                        if (latest_proposal.proposal_status != ProposalStatus::Committed) {
+
+                            let block_commit_result: Result<(),String> = Block::commit_if_valid(proposal.clone().proposal_block);
+                            if block_commit_result.is_ok() {
+
+                                for peer in self.peers.clone().peer_set {
+                                    //TODO: decide who we should broadcast to
+                                    if Server::broadcast_proposal_resolution(proposal.clone(),
+                                                                          peer.clone().location,
+                                                                          node_ip.clone()).is_ok() {
+                                        println!("[determine_transition_step], broadcast_proposal_resolution SUCCESS...");
+                                        //TODO: update proposal to committed status if
+                                    } else {
+                                        println!("[determine_transition_step], broadcast_proposal_resolution FAILED...");
+                                        //TODO: could update to NotValid of FailedAccepted?
+                                        //TODO check for enough responses to even update it.
+                                        //update it on one successul, or all
+                                        //DB::update_proposal(proposal.proposal_id, "accepted_broadcasted");
+                                    }
+                                    //TODO: and change proposal_status to Accepted_Broadcasted after sending to all peers
+                                }
+
+                                DB::update_proposal(proposal.clone(), "committed");
+
+                            } else {
+                                println!("[ERROR] [determine_transition_step] Block commit result is NOT OKAY!");
+                            }
+
                         } else {
-                            println!("[determine_transition_step], broadcast_proposal_resolution FAILED...");
-                            //TODO: could update to NotValid of FailedAccepted?
-                            //TODO check for enough responses to even update it.
-                            //update it on one successul, or all
-                            //DB::update_proposal(proposal.proposal_id, "accepted_broadcasted");
+                            println!("[ERROR] [determine_transition_step] latest_proposal.proposal_status is COMMITED, DO NOTHING");
                         }
-                        //TODO: and change proposal_status to Accepted_Broadcasted after sending to all peers
+
+
+                    },
+                    None => {
+                        println!("[determine_transition_step], latest_proposal_option is None");
                     }
-
-                    DB::update_proposal(proposal.clone(), "committed");
-
-                } else {
-                    println!("[ERROR] Block commit result is NOT OKAY!");
                 }
+
+
             },
             ProposalStatus::Rejected => {
                 //TODO: check to see if we have enough responses
@@ -633,8 +661,9 @@ impl StateTransition for Node {
                 match local_block_id_option {
                     Some(local_block_id) => { // successfuly fetch block id
 
-
+                        /*
                         for peer in self.peers.clone().peer_set {
+
                             if Server::broadcast_block_query( ( local_block_id ),
                                                                peer.clone().location,
                                                                node_ip.clone()).is_ok() {
@@ -643,7 +672,9 @@ impl StateTransition for Node {
                             } else {
                                 println!("[determine_transition_step], broadcast_block_query FAILED 1...");
                             }
+
                         }
+                        */
 
 
                     },
@@ -687,6 +718,7 @@ impl StateTransition for Node {
 
                 for peer in self.peers.clone().peer_set {
 
+                    // TODO: REMOVE CUZ TX ARE GETTING EXECUTED MORE THAN ONCE
                     if Server::broadcast_proposal_resolution(proposal.clone(),
                                                           peer.clone().location,
                                                           node_ip.clone()).is_ok() {
@@ -696,7 +728,13 @@ impl StateTransition for Node {
 
                     }
 
+                    //TODO maybe sleep
+
                 }
+
+            },
+            ProposalStatus::PreCommit => {
+                //TODO: do nothing, interim state
 
             },
             ProposalStatus::NotValid => {

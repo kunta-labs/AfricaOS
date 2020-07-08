@@ -21,7 +21,8 @@ use db::{DB,
          DBReadTransaction,
          FileDirectoryReader,
          DBWriteTransaction,
-         DBStateManager};
+         DBStateManager,
+         LogDebug};
 use std::io::{Error, ErrorKind};
 use timestamp::{Timestamp, NewTimestamp, StringToTimestamp};
 use hash::{Hasher, CalculateSHA256Hash};
@@ -655,6 +656,7 @@ impl ExecuteTransactions for Transaction {
                 // iterate over each transaction
                 transactions.iter().for_each( | tx | {
                     println!( "execute_block_transactions(), BEFORE json_state_buffer OVERWRITE: {}", json_state_buffer.clone() );
+                    DB::write_transaction_debug( String::from( format!("tx individual execution: {}", tx.transaction_hash) ) );
                     json_state_buffer = tx.execute( &Some( State::to_state( json_state_buffer.clone() ) ) );
                     println!("execute_block_transactions(),  AFTER json_state_buffer OVERWRITE: {}", json_state_buffer.clone() );
                 });
@@ -690,7 +692,7 @@ impl Executable for Transaction {
         match &self.transaction_type {
             TransactionType::Output => {
                 // TODO MACRO USE!!!! CUSTOM_TRANSACTION_OUTPUT_LOGIC!()
-                println!("TX execute TX Output BEFORE: {} : ",  State::to_json( current_state_buffer.clone().unwrap() ) );
+                println!("TX execute() TX Output BEFORE: {} : ",  State::to_json( current_state_buffer.clone().unwrap() ) );
 
                 // TODO: create new address in state
                 let mut state_as_json: JsonValue = State::to_json(current_state_buffer.clone().unwrap());
@@ -702,7 +704,7 @@ impl Executable for Transaction {
             },
             TransactionType::Input => {
                 // TODO MACRO USE!!!! CUSTOM_TRANSACTION_INPUT_LOGIC!()
-                println!("TX execute TX Input");
+                println!("TX execute() TX Input BEFORE");
                 let mut state_as_json: JsonValue = State::to_json(current_state_buffer.clone().unwrap());
                 Executor::execute_transaction_input_logic(state_as_json,
                                                           self.transaction_timestamp.clone(),
@@ -711,7 +713,7 @@ impl Executable for Transaction {
                                                           self.transaction_data.clone())
             },
             TransactionType::TxTypeError => {
-                println!("TX execute ERROR: TxTypeError");
+                println!("TX execute() ERROR: TxTypeError");
                 State::to_json(current_state_buffer.clone().unwrap())
             }
         }
