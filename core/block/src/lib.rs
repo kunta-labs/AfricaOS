@@ -384,9 +384,9 @@ impl CreateNewBlock for Block {
         match new_block_time {
             Some(ts) => {
 
-                //TODO node just created a new block, now we can clear TX
+                //TODO: node just created a new block, now we can clear TX
                 Transaction::clear_transaction_index();
-                
+
                 Ok(Block {
                     block_id: new_block_id,
                     // TODO: Transaction::json_from_tx_vec()
