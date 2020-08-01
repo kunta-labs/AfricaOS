@@ -383,6 +383,10 @@ impl CreateNewBlock for Block {
         println!("CreateNewBlock, transactons_from_pool, tx count: {}", transactons_from_pool.len());
         match new_block_time {
             Some(ts) => {
+
+                //TODO: node just created a new block, now we can clear TX
+                Transaction::clear_transaction_index();
+
                 Ok(Block {
                     block_id: new_block_id,
                     // TODO: Transaction::json_from_tx_vec()
@@ -740,7 +744,7 @@ impl CommitBlock for Block {
                         // TODO: only clear if proposals[block_parent_hash].
                         // This clears all transactions waiting to get into chain
                         // upon every new block commit, regardless of who commited it
-                        Transaction::clear_transaction_index();
+                        //Transaction::clear_transaction_index();
 
                         Ok(())
                     },

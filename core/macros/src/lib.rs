@@ -296,11 +296,13 @@ macro_rules! transaction_input_logic {
                                                     match &state_as_json.insert( &( format!("{}", $tx_sender ).to_string() ),
                                                                                     //format!("{}", JsonValue::from( state_account_amount.unwrap() + partner_tx_amount_parse_result.clone().unwrap() ) ) ) {
                                                                                     format!("{}", JsonValue::from( amount_i32_account.unwrap() + partner_tx_amount_parse_result.clone().unwrap() ) ) ) {
+                                                                                    //TODO: safe addition
                                                          Ok(_) => {
 
                                                              match &state_as_json.insert( &( format!("{}", partner_tx_sender ).to_string() ),
                                                                                              //format!("{}", JsonValue::from( state_partner_amount.unwrap() - partner_tx_amount_parse_result.unwrap() ) ) ) {
                                                                                              format!("{}", JsonValue::from( amount_i32_partner.unwrap() - partner_tx_amount_parse_result.unwrap() ) ) ) {
+                                                                                             //TODO: safe subtraction
                                                                   Ok(_) => {
                                                                       //TODO: after we insert the initial state for the sender
                                                                       //current_state_buffer
