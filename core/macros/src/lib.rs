@@ -293,6 +293,11 @@ macro_rules! transaction_input_logic {
                                                     println!("input: amount_i32_account: {} ", amount_i32_account.clone().unwrap());
                                                     println!("input: amount_i32_partner: {} ", amount_i32_partner.clone().unwrap());
 
+                                                    // balance check balance >= tx amt
+                                                    if( amount_i32_account.clone().unwrap() < partner_tx_amount_parse_result.clone().unwrap() ){
+                                                        return $state;
+                                                    } else {}
+
                                                     match &state_as_json.insert( &( format!("{}", $tx_sender ).to_string() ),
                                                                                     //format!("{}", JsonValue::from( state_account_amount.unwrap() + partner_tx_amount_parse_result.clone().unwrap() ) ) ) {
                                                                                     format!("{}", JsonValue::from( amount_i32_account.unwrap() + partner_tx_amount_parse_result.clone().unwrap() ) ) ) {
